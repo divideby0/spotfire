@@ -1,0 +1,202 @@
+package com.github.divideby0.playlister
+dialect "java"
+
+import org.optaplanner.core.api.score.buildin.bendable.BendableScoreHolder;
+import com.github.divideby0.playlister.domain.*;
+import java.util.List;
+import java.util.Set;
+
+global BendableScoreHolder scoreHolder;
+
+salience 99
+rule "Should identify transitions"
+    when
+    $previous: PlaylistAssignment($pos1: position, track != null)
+    $next: PlaylistAssignment(position == $pos1 + 1, track != null)
+
+    then
+    TrackTransition transition = new TrackTransition($previous, $next);
+    insertLogical(transition);
+end
+
+rule "Should start at position 0"
+    when
+    $firstPosition: Number(intValue() != 0) from accumulate(
+        PlaylistAssignment(track != null, $pos: position),
+        min($pos)
+    )
+
+    then
+    scoreHolder.addHardConstraintMatch(kcontext, 1, -$firstPosition.intValue());
+end
+
+declare PlaylistGap
+    startPosition: Integer
+    endPosition: Integer
+    length: Integer
+end
+
+rule "Idenitfy gaps in playlist"
+    salience 50
+
+    when
+    PlaylistAssignment(track == null, $startPos: position)
+    PlaylistAssignment(track == null, position > $startPos, $endPos: position)
+    not PlaylistAssignment(track != null, position > $startPos, position < $endPos)
+    not PlaylistAssignment(track == null, position == $startPos-1)
+    not PlaylistAssignment(track == null, position == $endPos+1)
+
+    then
+    PlaylistGap gap = new PlaylistGap();
+    gap.setStartPosition($startPos);
+    gap.setEndPosition($endPos);
+    gap.setLength($endPos - $startPos);
+    insertLogical(gap);
+end
+
+rule "Should not have gaps in playlist"
+    when
+    PlaylistGap($length: length);
+
+    then
+    scoreHolder.addHardConstraintMatch(kcontext, 2, -$length*3);
+end
+
+rule "Should not play track more than once"
+    when
+    PlaylistAssignment(track != null, $track: track, $pos1: position)
+    PlaylistAssignment(track == $track, position > $pos1)
+
+    then
+    scoreHolder.addHardConstraintMatch(kcontext, 3, -2);
+end
+
+rule "Should play as many songs as possible"
+    when
+    $total: Number() from accumulate($a: PlaylistAssignment(), count($a))
+    $assigned: Number(this < $total) from accumulate($a: PlaylistAssignment(track != null), count($a))
+
+    then
+//    System.out.println("Total: " + $total);
+    scoreHolder.addHardConstraintMatch(kcontext, 3, ($assigned.intValue() - $total.intValue()));
+end
+
+declare NoArtistStreak
+    artist: SpotifyArtist
+    startPosition: Integer
+    endPosition: Integer
+    length: Integer
+end
+
+rule "should identify no artist streaks"
+    when
+    $artist: SpotifyArtist()
+    PlaylistAssignment(track != null, track.artists contains $artist, $startPos: position)
+    PlaylistAssignment(track != null, position > $startPos, track.artists contains $artist, $endPos: position)
+    not PlaylistAssignment(track != null, position > $startPos, position < $endPos, $artist memberOf track.artists)
+
+    then
+    NoArtistStreak streak = new NoArtistStreak();
+    streak.setArtist($artist);
+    streak.setStartPosition($startPos + 1);
+    streak.setEndPosition($endPos);
+    streak.setLength($endPos - $startPos - 1);
+    insertLogical(streak);
+end
+
+rule "Should not play same artist in previous 10 tracks"
+    when
+    PlaylistSettings($min: mimimumTracksBetweenSameArtist)
+    NoArtistStreak(length < $min, $length: length)
+
+    then
+    scoreHolder.addSoftConstraintMatch(kcontext, 0, $length-$min);
+end
+
+rule "Tracks transitions should have a known key change type"
+    when
+    TrackTransition(keyChangeType == null)
+
+    then
+    scoreHolder.addSoftConstraintMatch(kcontext, 0, -2);
+end
+
+rule "Track transitions should use prefferred key changes"
+    when
+    TrackTransition(keyChangeType != null, !keyChangeType.preferred)
+
+    then
+    scoreHolder.addSoftConstraintMatch(kcontext, 0, -1);
+end
+
+declare KeyChangeTypeStreak
+    type: KeyChangeType
+    startPosition: Integer
+    endPosition: Integer
+    length: Integer
+end
+
+rule "Should identify same key streak"
+    salience 50
+    when
+    TrackTransition($type: keyChangeType, $startPos: previousPosition)
+    TrackTransition(keyChangeType == $type, previousPosition > $startPos, $endPos: nextPosition)
+    not TrackTransition(keyChangeType != $type, previousPosition > $startPos, nextPosition < $endPos)
+    not TrackTransition(keyChangeType == $type, previousPosition == $startPos-1)
+    not TrackTransition(keyChangeType == $type, nextPosition == $endPos+1)
+
+    then
+    KeyChangeTypeStreak streak = new KeyChangeTypeStreak();
+    streak.setStartPosition($startPos);
+    streak.setEndPosition($endPos);
+    streak.setLength($endPos - $startPos);
+    streak.setType($type);
+    insertLogical(streak);
+end
+
+rule "Should not exceed maximum same key change type streak"
+    when
+    PlaylistSettings($max: maximumKeyChangeTypeStreak)
+    KeyChangeTypeStreak(type != KeyChangeType.SAME_KEY, length > $max, $length: length)
+
+    then
+    scoreHolder.addSoftConstraintMatch(kcontext, 1, $max-$length);
+end
+
+rule "Should not exceed maximum same key streak"
+    when
+    PlaylistSettings($max: maximumSameKeyStreak)
+    KeyChangeTypeStreak(type == KeyChangeType.SAME_KEY, length > $max, $length: length)
+
+    then
+    scoreHolder.addSoftConstraintMatch(kcontext, 2, $max-$length);
+end
+
+rule "Same key streaks should be above minimum length"
+    when
+    PlaylistSettings($min: minimumSameKeyStreak)
+    KeyChangeTypeStreak(type == KeyChangeType.SAME_KEY, length < $min, $length: length)
+
+    then
+    scoreHolder.addSoftConstraintMatch(kcontext, 2, $length-$min);
+end
+
+rule "Should not change tempo drastically"
+    when
+    PlaylistSettings($max: maximumTempoChange)
+    TrackTransition(Math.abs(tempoChange) > $max, $change: tempoChange);
+
+    then
+    Double penalty = -Math.pow(Math.abs($change)-$max, 1.5);
+    scoreHolder.addSoftConstraintMatch(kcontext, 3, penalty.intValue());
+end
+
+rule "Should not change energy drastically"
+    when
+    PlaylistSettings($max: maximumEnergyChange)
+    TrackTransition(Math.abs(energyChange) > $max, $change: energyChange)
+
+    then
+    Double penalty = -Math.pow((Math.abs($change)-$max)*100, 1.5);
+    scoreHolder.addSoftConstraintMatch(kcontext, 3, penalty.intValue());
+end

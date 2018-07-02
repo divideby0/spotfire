@@ -1,0 +1,90 @@
+apply plugin: 'java'
+apply plugin: 'maven'
+
+group = 'com.github.divideby0'
+version = 'dev'
+
+description = """hello"""
+
+
+sourceCompatibility = 1.5
+targetCompatibility = 1.5
+tasks.withType(JavaCompile) {
+  options.encoding = 'UTF-8'
+}
+
+buildscript {
+  ext {
+    kotlinVersion = '1.2.50'
+    kieVersion = '7.7.0.Final'
+    jacksonVersion = '2.9.2'
+  }
+  repositories {
+    mavenCentral()
+    maven { url "https://plugins.gradle.org/m2/" }
+  }
+  dependencies {
+    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion"
+    classpath "io.spring.gradle:dependency-management-plugin:1.0.3.RELEASE"
+    classpath "com.github.jengelman.gradle.plugins:shadow:2.0.1"
+    classpath "de.sebastianboegl.gradle.plugins:shadow-log4j-transformer:2.1.1"
+  }
+}
+
+apply plugin: 'kotlin'
+apply plugin: "io.spring.dependency-management"
+apply plugin: 'com.github.johnrengelman.shadow'
+apply plugin: "de.sebastianboegl.shadow.transformer.log4j"
+
+repositories {
+  maven { url "http://repo.maven.apache.org/maven2" }
+  maven { url 'https://jitpack.io' }
+  maven { url "http://dl.bintray.com/jetbrains/spek" }
+}
+
+// If requiring AWS JDK, uncomment the dependencyManagement to use the bill of materials
+//   https://aws.amazon.com/blogs/developer/managing-dependencies-with-aws-sdk-for-java-bill-of-materials-module-bom/
+dependencyManagement {
+  imports {
+    mavenBom 'com.amazonaws:aws-java-sdk-bom:1.11.206'
+  }
+}
+
+dependencies {
+  compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion"
+
+  compile 'com.amazonaws:aws-lambda-java-core:1.1.0'
+  compile 'com.amazonaws:aws-lambda-java-log4j2:1.0.0'
+  compile 'com.amazonaws:aws-lambda-java-events:2.0.1'
+
+  compile 'org.apache.logging.log4j:log4j-slf4j-impl:2.11.0'
+  compile 'com.github.kgilmer:kotlinx-cli:bdb0c81'
+
+  compile 'se.michaelthelin.spotify:spotify-web-api-java:2.0.3'
+
+  compile "com.fasterxml.jackson.core:jackson-core:$jacksonVersion"
+  compile "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
+  compile "com.fasterxml.jackson.core:jackson-annotations:$jacksonVersion"
+  compile "com.fasterxml.jackson.module:jackson-module-kotlin:$jacksonVersion"
+
+  compile "org.drools:drools-core:$kieVersion"
+  compile "org.drools:drools-compiler:$kieVersion"
+  compile "org.optaplanner:optaplanner-core:$kieVersion"
+
+  testCompile('org.jetbrains.spek:spek-api:1.1.5') {
+    exclude group: 'org.jetbrains.kotlin'
+  }
+  testRuntime('org.jetbrains.spek:spek-junit-platform-engine:1.1.5') {
+    exclude group: 'org.jetbrains.kotlin'
+  }
+}
+
+kotlin {
+  experimental {
+    coroutines 'enable'
+  }
+}
+
+task deploy(type: Exec, dependsOn: 'shadowJar') {
+  commandLine 'serverless', 'deploy'
+}
