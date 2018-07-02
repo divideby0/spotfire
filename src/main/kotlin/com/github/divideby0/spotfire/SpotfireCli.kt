@@ -110,14 +110,12 @@ object SpotfireCli {
       log.info("")
 
       val trackUris = solution.assignments.sortedBy { it.position }.mapNotNull { it.track?.spotifyUri }
-      val descriptionSb = StringBuilder("Spotfire-enhanced playlist based on ${spotify.getPlaylistUrl(sourcePlaylist)}\n\n")
-      descriptionSb.append("Score: ${solution.score}\n\n")
+
       log.info("Score: ${solution.score}")
 
       scoreDirector.constraintMatchTotals.forEach { mt ->
         val violationSummary = "${mt.constraintName} -> violations: ${mt.constraintMatchCount}, score: ${mt.scoreTotal.toShortString()}"
         log.info(violationSummary)
-        descriptionSb.append("$violationSummary\n")
         mt.constraintMatchSet.forEachIndexed { i, match ->
           log.debug("  - Violation $i")
           match.justificationList.forEach { obj ->
@@ -167,7 +165,7 @@ object SpotfireCli {
       if(!dryRun) {
         spotify.createPlaylist(
           playlistName = destPlaylistName,
-          description = StringUtils.abbreviate(descriptionSb.toString(), 300),
+          description = "Spotfire-enhanced playlist based on ${spotify.getPlaylistUrl(sourcePlaylist)} => Score: ${solution.score}",
           trackUris = trackUris
         )
       } else {
