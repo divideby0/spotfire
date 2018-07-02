@@ -10,6 +10,7 @@ import org.optaplanner.core.api.solver.SolverFactory
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import kotlinx.cli.*
+import org.apache.commons.lang3.StringUtils
 import org.slf4j.LoggerFactory
 import kotlin.system.exitProcess
 
@@ -123,25 +124,28 @@ object SpotfireCli {
       }
 
       val trackUris = solution.assignments.sortedBy { it.position }.mapNotNull { it.track?.spotifyUri }
-      val constraintMatchDetails = StringBuilder("Score: ${solution.score}\n")
+      val description = StringBuilder("Spotfire-enhanced playlist based on $sourcePlaylistUri\n")
+      description.append("Score: ${solution.score}\n")
+      log.info("Score: ${solution.score}")
 
       scoreDirector.constraintMatchTotals.forEach { mt ->
-        constraintMatchDetails.append("${mt.constraintName} -> violations: ${mt.constraintMatchCount}, score: ${mt.scoreTotal.toShortString()}\n")
-        if(log.isDebugEnabled) {
-          mt.constraintMatchSet.forEachIndexed { i, match ->
-            constraintMatchDetails.append("  - Violation $i\n")
-            match.justificationList.forEach { obj ->
-              constraintMatchDetails.append("    - $obj\n")
+        val violationSummary = "${mt.constraintName} -> violations: ${mt.constraintMatchCount}, score: ${mt.scoreTotal.toShortString()}"
+        log.info(violationSummary)
+        description.append("$violationSummary\n")
+        mt.constraintMatchSet.forEachIndexed { i, match ->
+          log.debug("  - Violation $i")
+          match.justificationList.forEach { obj ->
+            if(obj is TrackTransition) {
+              log.debug("    - $obj -> ${obj.previousPosition}: ${obj.previous.track} -> ${obj.nextPosition}: ${obj.next.track}")
+            } else {
+              log.debug("    - $obj")
             }
           }
         }
       }
 
-      log.info("Constraint matches")
-      constraintMatchDetails.lines().forEach(log::info)
-
       if(!dryRun) {
-        spotify.createPlaylist(destPlaylistName, constraintMatchDetails.toString(), trackUris)
+        spotify.createPlaylist(destPlaylistName, StringUtils.abbreviate(description.toString(), 200), trackUris)
       } else {
         log.info("Skipping actual Spotify playlist creation bc dry run enabled")
       }
