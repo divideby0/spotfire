@@ -14,6 +14,8 @@ class SpotifyClient(
 
   val playlistUriPattern = Regex("spotify:user:([^:]+):playlist:(\\w+)")
 
+	fun getPlaylistUrl(playlist: Playlist) = "https://open.spotify.com/user/${playlist.owner.id}/playlist/${playlist.id}"
+
   fun getPlaylist(spotifyUri: String): Playlist? {
     // spotify:user:thekeeleys:playlist:4KFCLoqv4HIinfmA8CIdPl
     val matchResult = playlistUriPattern.matchEntire(spotifyUri)
