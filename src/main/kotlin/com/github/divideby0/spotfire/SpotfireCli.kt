@@ -70,7 +70,7 @@ fun main(args: Array<String>) {
 
     val featureMap = spotify.getAudioFeaturesInPlaylist(tracks)
 
-    val spotifyTracks = tracks.mapIndexedNotNull { i, pt ->
+    val spotifyTracks = tracks.mapNotNull { pt ->
       val track = pt.track
       val features = featureMap[track.id]
       if (features != null) {
