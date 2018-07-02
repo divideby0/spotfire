@@ -3,12 +3,15 @@ package com.github.divideby0.spotfire.utils
 import com.neovisionaries.i18n.CountryCode
 import com.wrapper.spotify.SpotifyApi
 import com.wrapper.spotify.model_objects.specification.*
+import org.slf4j.LoggerFactory
 
 class SpotifyClient(
 	val spotifyApiBuilder: SpotifyApi.Builder = SpotifyApi.Builder(),
 	val accessToken: String,
 	val spotifyApi: SpotifyApi = spotifyApiBuilder.setAccessToken(accessToken).build()
 ) {
+	val log = LoggerFactory.getLogger(this.javaClass)
+
   val playlistUriPattern = Regex("spotify:user:([^:]+):playlist:(\\w+)")
 
   fun getPlaylist(spotifyUri: String): Playlist? {
@@ -23,10 +26,13 @@ class SpotifyClient(
   }
 
   fun getCurrentUser(): User {
-    return spotifyApi.currentUsersProfile.build().execute()
+    val user = spotifyApi.currentUsersProfile.build().execute()
+		log.info("Retrieved current user as ${user.id}")
+		return user
   }
 
   fun getPlaylist(userId: String, playlistId: String): Playlist {
+		log.info("Getting playlist $playlistId for user $userId")
     return spotifyApi.getPlaylist(userId, playlistId)
       .fields("id,name,description,collaborative,public,owner")
       .build()
@@ -34,6 +40,7 @@ class SpotifyClient(
   }
 
 	fun getPlaylistTracks(userId: String, playlistId: String, market: CountryCode = CountryCode.US): List<PlaylistTrack> {
+		log.info("Getting tracks for playlist $playlistId")
 		val limit = 100
 		val firstPage = spotifyApi
 			.getPlaylistsTracks(userId, playlistId)
@@ -63,6 +70,7 @@ class SpotifyClient(
 
 	fun getArtistsInPlaylist(tracks: List<PlaylistTrack>): Map<String, Artist> {
 		val artistIds = tracks.flatMap { pt -> pt.track.artists.map { artist -> artist.id } }.distinct()
+		log.info("Getting ${artistIds.size} artist details for playlist")
 		return artistIds.chunked(50).flatMap { ids ->
 			val resp = spotifyApi.getSeveralArtists(*ids.toTypedArray()).build().execute()
 			resp.filterNotNull().map { artist ->
@@ -73,6 +81,7 @@ class SpotifyClient(
 
 	fun getAlbumsInPlaylist(tracks: List<PlaylistTrack>): Map<String, Album> {
 		val albumIds = tracks.map { it.track.album.id }.distinct()
+		log.info("Getting ${albumIds.size} album details for playlist")
 		return albumIds.chunked(20).flatMap { ids ->
 			val resp = spotifyApi.getSeveralAlbums(*ids.toTypedArray()).build().execute()
 			resp.filterNotNull().map { album ->
@@ -82,6 +91,7 @@ class SpotifyClient(
 	}
 
 	fun getAudioFeaturesInPlaylist(tracks: List<PlaylistTrack>): Map<String, AudioFeatures> {
+		log.info("Getting audio features for ${tracks.size} tracks in playlist")
 		return tracks.chunked(100).flatMap { chunk ->
 			val ids = chunk.map { it.track.id }
 			val resp = spotifyApi.getAudioFeaturesForSeveralTracks(*ids.toTypedArray()).build().execute()
@@ -89,18 +99,20 @@ class SpotifyClient(
 		}.toMap()
 	}
 
-	fun createPlaylist(playlistName: String, description: String, trackUris: List<String>) {
+	fun createPlaylist(playlistName: String, description: String, trackUris: List<String>, public: Boolean = true) {
     val userId = getCurrentUser().id
+
+		log.info("Creating playlist '$playlistName' for user $userId with ${trackUris.size} tracks")
 
     val playlist = spotifyApi
       .createPlaylist(userId, playlistName)
       .description(description)
-      .public_(true)
+      .public_(public)
       .build()
       .execute()
 
     trackUris.chunked(20).forEach { chunk ->
-      println("Adding ${chunk.size} tracks to playlist ${playlistName}")
+      log.debug("Adding ${chunk.size} tracks to playlist ${playlistName}")
 			spotifyApi.addTracksToPlaylist(userId, playlist.id, chunk.toTypedArray()).build().execute()
 		}
 	}
