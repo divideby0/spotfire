@@ -15,12 +15,14 @@ data class Key(
 		ChromaticNote.values()[noteIndex]
 	}
 
+	val second = scale[1]
 	val third = scale[2]
 	val fifth = scale[4]
+	val seventh = scale[6]
 
 	private val modeSuffix = when(mode) {
-		Modality.MAJOR -> ""
-		Modality.MINOR -> "m"
+		Modality.MAJOR -> "maj"
+		Modality.MINOR -> "min"
 	}
 
 	override fun toString() = "${rootNote.label}$modeSuffix"

@@ -107,21 +107,7 @@ object SpotfireCli {
       val scoreDirector = solver.scoreDirectorFactory.buildScoreDirector()
       scoreDirector.workingSolution = solution
 
-      var lastAssignment: PlaylistAssignment? = null
-      solution.assignments.sortedBy { it.position }.forEach { a ->
-        println(a.track)
-        if (a.track != null) {
-          print("(")
-          if (lastAssignment != null) {
-            val transition = TrackTransition(lastAssignment!!, a)
-            print(transition)
-          } else {
-            print(a.track?.key)
-          }
-          print(")")
-        }
-        lastAssignment = a
-      }
+      log.info("")
 
       val trackUris = solution.assignments.sortedBy { it.position }.mapNotNull { it.track?.spotifyUri }
       val description = StringBuilder("Spotfire-enhanced playlist based on $sourcePlaylistUri\n")
@@ -145,7 +131,7 @@ object SpotfireCli {
                     if (c.contains("tempo")) messages.add("tempo: ${previous.tempo} -> ${next.tempo} (${obj.tempoChange})")
                     if (c.contains("energy")) messages.add("energy: ${previous.energy} -> ${next.energy} (${obj.energyChange})")
                   }
-                  log.debug("    - ${messages.joinToString(", ")} : ${obj.previousPosition} - '${previous.simpleName} -> ${obj.nextPosition} - '${next.simpleName}'")
+                  log.debug("    - ${messages.joinToString(", ")} => $obj")
                 }
               }
             } else {
@@ -154,6 +140,29 @@ object SpotfireCli {
           }
         }
       }
+
+      log.info("")
+
+      log.info("Playlist")
+      log.info("============")
+      var lastAssignment: PlaylistAssignment? = null
+      solution.assignments.sortedBy { it.position }.forEach { a ->
+        a.track?.let { track ->
+          val sb = StringBuffer()
+          sb.append("=> ")
+          if(lastAssignment != null) {
+            val transition = TrackTransition(lastAssignment!!, a)
+            sb.append(transition)
+          } else {
+            sb.append(track.key)
+          }
+          log.info(sb.toString())
+        }
+        log.info(a.toString())
+        lastAssignment = a
+      }
+
+      log.info("")
 
       if(!dryRun) {
         spotify.createPlaylist(destPlaylistName, StringUtils.abbreviate(description.toString(), 200), trackUris)

@@ -16,10 +16,11 @@ class PlaylistAssignment: Comparable<PlaylistAssignment> {
 
 	constructor(position: Int): this() {
 		this.position = position
-
 	}
 
 	override fun equals(other: Any?) = if(other is PlaylistAssignment) other.position == position else false
 	override fun hashCode() = position
 	override fun compareTo(other: PlaylistAssignment) = position.compareTo(other.position)
+
+	override fun toString() = "${position.toString().padStart(4, '0')} - ${track?.simpleName}"
 }

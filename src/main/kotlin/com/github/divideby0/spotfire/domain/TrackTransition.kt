@@ -46,5 +46,5 @@ class TrackTransition(
     }
   }
 
-  override fun toString() = "keyChange: $previousKey -> $nextKey (${keyChangeType ?: "UNKNOWN"}), tempoChange: $tempoChange, energyChange: $energyChange"
+  override fun toString() = "keyChange: $previousKey -> $nextKey (${keyChangeType ?: "UNKNOWN"}), tempoChange: $tempoChange, energyChange: $energyChange, prev: ${previousPosition.toString().padStart(4, '0')}, next: ${nextPosition.toString().padStart(4, '0')}"
 }
