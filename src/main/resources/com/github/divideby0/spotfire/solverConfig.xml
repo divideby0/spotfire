@@ -3,26 +3,26 @@
     <environmentMode>PRODUCTION</environmentMode>
     <!--<environmentMode>FULL_ASSERT</environmentMode>-->
     <!--<environmentMode>FAST_ASSERT</environmentMode>-->
-    <solutionClass>com.github.divideby0.playlister.domain.Playlist</solutionClass>
-    <entityClass>com.github.divideby0.playlister.domain.PlaylistAssignment</entityClass>
+    <solutionClass>com.github.divideby0.spotfire.domain.Playlist</solutionClass>
+    <entityClass>com.github.divideby0.spotfire.domain.PlaylistAssignment</entityClass>
 
     <scoreDirectorFactory>
-        <scoreDrl>com/github/divideby0/playlister/scoreRules.drl</scoreDrl>
+        <scoreDrl>com/github/divideby0/spotfire/scoreRules.drl</scoreDrl>
     </scoreDirectorFactory>
 
     <termination>
-        <secondsSpentLimit>600</secondsSpentLimit>
+        <secondsSpentLimit>280</secondsSpentLimit>
         <bestScoreLimit>[0/0/0/0]hard/[0/0/0/0]soft</bestScoreLimit>
     </termination>
     <constructionHeuristic>
         <termination>
-            <secondsSpentLimit>150</secondsSpentLimit>
+            <secondsSpentLimit>120</secondsSpentLimit>
         </termination>
         <constructionHeuristicType>FIRST_FIT_DECREASING</constructionHeuristicType>
     </constructionHeuristic>
     <localSearch>
         <termination>
-            <unimprovedStepCountLimit>100</unimprovedStepCountLimit>
+            <unimprovedStepCountLimit>40</unimprovedStepCountLimit>
         </termination>
         <unionMoveSelector>
             <cacheType>PHASE</cacheType>

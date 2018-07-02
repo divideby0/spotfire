@@ -1,8 +1,8 @@
-package com.github.divideby0.playlister
+package com.github.divideby0.spotfire
 dialect "java"
 
 import org.optaplanner.core.api.score.buildin.bendable.BendableScoreHolder;
-import com.github.divideby0.playlister.domain.*;
+import com.github.divideby0.spotfire.domain.*;
 import java.util.List;
 import java.util.Set;
 

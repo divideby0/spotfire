@@ -1,4 +1,4 @@
-package com.github.divideby0.playlister.domain
+package com.github.divideby0.spotfire.domain
 
 import com.wrapper.spotify.model_objects.specification.Artist
 

@@ -1,10 +1,9 @@
-package com.github.divideby0.playlister.domain
+package com.github.divideby0.spotfire.domain
 
 import com.wrapper.spotify.enums.AlbumType
 import com.wrapper.spotify.enums.ReleaseDatePrecision.*
 import com.wrapper.spotify.model_objects.specification.Album
 import java.time.LocalDate
-import java.time.LocalDate.parse
 
 data class SpotifyAlbum(
 	val spotifyId: String,

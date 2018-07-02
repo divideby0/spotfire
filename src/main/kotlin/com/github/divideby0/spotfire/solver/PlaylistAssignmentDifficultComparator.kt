@@ -1,6 +1,6 @@
-package com.github.divideby0.playlister.solver
+package com.github.divideby0.spotfire.solver
 
-import com.github.divideby0.playlister.domain.PlaylistAssignment
+import com.github.divideby0.spotfire.domain.PlaylistAssignment
 
 class PlaylistAssignmentDifficultComparator : Comparator<PlaylistAssignment> {
   override fun compare(o1: PlaylistAssignment?, o2: PlaylistAssignment?): Int {

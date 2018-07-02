@@ -1,4 +1,4 @@
-package com.github.divideby0.playlister.domain
+package com.github.divideby0.spotfire.domain
 
 data class PlaylistSettings(
   val mimimumTracksBetweenSameArtist: Int = 10,

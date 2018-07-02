@@ -1,6 +1,6 @@
-package com.github.divideby0.playlister
+package com.github.divideby0.spotfire
 
-import com.github.divideby0.playlister.utils.SpotifyClient
+import com.github.divideby0.spotfire.utils.SpotifyClient
 import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.given
 import org.jetbrains.spek.api.dsl.on

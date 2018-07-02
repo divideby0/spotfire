@@ -1,4 +1,4 @@
-package com.github.divideby0.playlister.utils
+package com.github.divideby0.spotfire.utils
 
 import com.neovisionaries.i18n.CountryCode
 import com.wrapper.spotify.SpotifyApi

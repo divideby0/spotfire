@@ -1,13 +1,10 @@
-package com.github.divideby0.playlister.domain
+package com.github.divideby0.spotfire.domain
 
 import com.wrapper.spotify.enums.Modality
 import com.wrapper.spotify.model_objects.specification.AudioFeatures
 import com.wrapper.spotify.model_objects.specification.Track
-import org.joda.time.convert.IntervalConverter
 import java.time.Duration
 import java.time.temporal.ChronoUnit
-import java.time.temporal.TemporalUnit
-import java.util.concurrent.TimeUnit
 
 data class SpotifyTrack(
 	// track properties

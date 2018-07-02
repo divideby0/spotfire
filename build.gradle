@@ -4,7 +4,7 @@ apply plugin: 'maven'
 group = 'com.github.divideby0'
 version = 'dev'
 
-description = """hello"""
+description = """Spotify playlist optimizer using music theory for smooth(er) track transitions"""
 
 
 sourceCompatibility = 1.5

@@ -1,6 +1,6 @@
-package com.github.divideby0.playlister.domain
+package com.github.divideby0.spotfire.domain
 
-import com.github.divideby0.playlister.domain.KeyChangeType.*
+import com.github.divideby0.spotfire.domain.KeyChangeType.*
 import com.wrapper.spotify.enums.Modality.*
 
 class TrackTransition(

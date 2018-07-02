@@ -1,6 +1,6 @@
-package com.github.divideby0.playlister.domain
+package com.github.divideby0.spotfire.domain
 
-import com.github.divideby0.playlister.solver.PlaylistAssignmentDifficultComparator
+import com.github.divideby0.spotfire.solver.PlaylistAssignmentDifficultComparator
 import org.optaplanner.core.api.domain.entity.PlanningEntity
 import org.optaplanner.core.api.domain.variable.PlanningVariable
 

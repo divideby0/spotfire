@@ -1,9 +1,9 @@
-package com.github.divideby0.playlister
+package com.github.divideby0.spotfire
 
-import com.github.divideby0.playlister.domain.*
-import com.github.divideby0.playlister.domain.ChromaticNote
-import com.github.divideby0.playlister.domain.Key
-import com.github.divideby0.playlister.utils.SpotifyClient
+import com.github.divideby0.spotfire.domain.*
+import com.github.divideby0.spotfire.domain.ChromaticNote
+import com.github.divideby0.spotfire.domain.Key
+import com.github.divideby0.spotfire.utils.SpotifyClient
 import com.wrapper.spotify.enums.Modality
 import org.optaplanner.core.api.solver.Solver
 import org.optaplanner.core.api.solver.SolverFactory
@@ -92,7 +92,7 @@ fun main(args: Array<String>) {
       assignments = assignments
     )
 
-    val solverFactory: SolverFactory<Playlist> = SolverFactory.createFromXmlResource("com/github/divideby0/playlister/solverConfig.xml")
+    val solverFactory: SolverFactory<Playlist> = SolverFactory.createFromXmlResource("com/github/divideby0/spotfire/solverConfig.xml")
     val solver: Solver<Playlist> = solverFactory.buildSolver()
     val solution = solver.solve(problem)
 
