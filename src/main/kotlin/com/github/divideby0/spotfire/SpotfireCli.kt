@@ -136,7 +136,18 @@ object SpotfireCli {
           log.debug("  - Violation $i")
           match.justificationList.forEach { obj ->
             if(obj is TrackTransition) {
-              log.debug("    - $obj -> ${obj.previousPosition}: ${obj.previous.track} -> ${obj.nextPosition}: ${obj.next.track}")
+              obj.next.track?.let { next ->
+                obj.previous.track?.let { previous ->
+                  val messages = mutableListOf<String>()
+                  match.constraintName.toLowerCase().let { c ->
+                    if (c.contains("key")) messages.add("key: ${previous.key} -> ${next.key} (${obj.keyChangeType
+                      ?: "UNKNOWN"})")
+                    if (c.contains("tempo")) messages.add("tempo: ${previous.tempo} -> ${next.tempo} (${obj.tempoChange})")
+                    if (c.contains("energy")) messages.add("energy: ${previous.energy} -> ${next.energy} (${obj.energyChange})")
+                  }
+                  log.debug("    - ${messages.joinToString(", ")} : ${obj.previousPosition} - '${previous.simpleName} -> ${obj.nextPosition} - '${next.simpleName}'")
+                }
+              }
             } else {
               log.debug("    - $obj")
             }

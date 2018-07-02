@@ -62,6 +62,9 @@ data class SpotifyTrack(
 	override fun equals(other: Any?) = if(other is SpotifyTrack) other.spotifyId == spotifyId else false
 	override fun hashCode() = spotifyId.hashCode()
 
+	val artistsString = artists.joinToString(" + ") { it.name }
+	val simpleName = "$artistsString - $name"
+
 	override fun toString(): String {
 		val artistStr = artists.joinToString(" + ") { it.name }
 		return "$artistStr - $name (key: $key, tempo: $tempo, duration: ${duration.seconds}s)"
