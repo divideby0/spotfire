@@ -113,11 +113,11 @@ object SpotfireCli {
 
       log.info("Score: ${solution.score}")
 
-      scoreDirector.constraintMatchTotals.forEach { mt ->
-        val violationSummary = "${mt.constraintName} -> violations: ${mt.constraintMatchCount}, score: ${mt.scoreTotal.toShortString()}"
+      scoreDirector.constraintMatchTotals.sortedBy { it.scoreTotal }.forEach { mt ->
+        val violationSummary = "${mt.constraintName} -> violations: ${mt.constraintMatchCount}, score impact: ${mt.scoreTotal.toShortString()}"
         log.info(violationSummary)
-        mt.constraintMatchSet.forEachIndexed { i, match ->
-          log.debug("  - Violation $i")
+        mt.constraintMatchSet.sortedBy { it.score }.forEachIndexed { i, match ->
+          log.debug("  - Violation $i, score impact: (${match.score})")
           match.justificationList.forEach { obj ->
             if(obj is TrackTransition) {
               obj.next.track?.let { next ->
