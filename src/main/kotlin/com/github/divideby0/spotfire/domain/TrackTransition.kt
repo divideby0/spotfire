@@ -45,4 +45,6 @@ class TrackTransition(
       }
     }
   }
+
+  override fun toString() = "keyChange: $previousKey -> $nextKey (${keyChangeType ?: "UNKNOWN"}), tempoChange: $tempoChange, energyChange: $energyChange"
 }
