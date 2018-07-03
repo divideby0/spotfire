@@ -12,7 +12,7 @@
 
     <termination>
         <secondsSpentLimit>280</secondsSpentLimit>
-        <bestScoreLimit>[0/0/0/0]hard/[0/0/0/0]soft</bestScoreLimit>
+        <bestScoreLimit>[0/0/0/0]hard/[0/0/0/0/0]soft</bestScoreLimit>
     </termination>
     <constructionHeuristic>
         <termination>
@@ -31,12 +31,12 @@
             <swapMoveSelector/>
         </unionMoveSelector>
         <acceptor>
-            <simulatedAnnealingStartingTemperature>[8/4/4/4]hard/[10/10/10/1000]soft</simulatedAnnealingStartingTemperature>
+            <simulatedAnnealingStartingTemperature>[8/4/4/4]hard/[10/10/10/10/1000]soft</simulatedAnnealingStartingTemperature>
             <!--<entityTabuRatio>0.05</entityTabuRatio>-->
             <!--<valueTabuSize>50</valueTabuSize>-->
         </acceptor>
         <forager>
-            <acceptedCountLimit>16</acceptedCountLimit>
+            <acceptedCountLimit>64</acceptedCountLimit>
         </forager>
     </localSearch>
 </solver>

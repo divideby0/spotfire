@@ -26,18 +26,21 @@ class TrackTransition(
         when (nextNote) {
           4 -> UP_FIFTH
           3 -> DOWN_FIFTH
+          1 -> UP_SECOND
           else -> null
         }
       } else if(previousKey.mode == MAJOR && nextKey.mode == MINOR) {
         when(nextNote) {
           5 -> RELATIVE_MINOR
-          4 -> UP_RELATIVE_MINOR_FIFTH
+          2 -> UP_RELATIVE_MINOR_FIFTH
+          1 -> DOWN_RELATIVE_MINOR_FIFTH
           else -> null
         }
       } else if (previousKey.mode == MINOR && nextKey.mode == MAJOR) {
         when(nextNote) {
           2 -> RELATIVE_MAJOR
-          3 -> DOWN_RELATIVE_MAJOR_FIFTH
+          6 -> UP_RELATIVE_MAJOR_FIFTH
+          5 -> DOWN_RELATIVE_MAJOR_FIFTH
           else -> null
         }
       } else {

@@ -104,13 +104,30 @@ rule "should identify no artist streaks"
     insertLogical(streak);
 end
 
-rule "Should not play same artist in previous 10 tracks"
+rule "Should not repeat same artist before minimum"
     when
-    PlaylistSettings($min: mimimumTracksBetweenSameArtist)
+    PlaylistSettings($min: minTracksBetweenArtistRepeat)
     NoArtistStreak(length < $min, $length: length)
 
     then
-    scoreHolder.addSoftConstraintMatch(kcontext, 0, $length-$min);
+    Double penalty = -Math.pow($length-$min, 2);
+    scoreHolder.addSoftConstraintMatch(kcontext, 1, penalty.intValue());
+end
+
+rule "Transition key scales should contain each other's root note"
+    when
+    TrackTransition(nextKey.scale not contains previousKey.rootNote || previousKey.scale not contains nextKey.rootNote)
+
+    then
+    scoreHolder.addSoftConstraintMatch(kcontext, 0, -40);
+end
+
+rule "Transition key scales should contain each other's fifth"
+    when
+    TrackTransition(nextKey.scale not contains previousKey.fifth || previousKey.scale not contains nextKey.fifth)
+
+    then
+    scoreHolder.addSoftConstraintMatch(kcontext, 0, -20);
 end
 
 rule "Tracks transitions should have a known key change type"
@@ -118,15 +135,15 @@ rule "Tracks transitions should have a known key change type"
     TrackTransition(keyChangeType == null)
 
     then
-    scoreHolder.addSoftConstraintMatch(kcontext, 0, -2);
+    scoreHolder.addSoftConstraintMatch(kcontext, 0, -10);
 end
 
-rule "Track transitions should use prefferred key changes"
+rule "Track transitions should use preferred key changes"
     when
-    TrackTransition(keyChangeType != null, !keyChangeType.preferred)
+    TrackTransition(keyChangeType != null, keyChangeType.penalty < 0, $penalty: keyChangeType.penalty)
 
     then
-    scoreHolder.addSoftConstraintMatch(kcontext, 0, -1);
+    scoreHolder.addSoftConstraintMatch(kcontext, 0, $penalty);
 end
 
 declare KeyChangeTypeStreak

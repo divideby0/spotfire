@@ -31,7 +31,7 @@ class Playlist() {
 	@PlanningEntityCollectionProperty
 	lateinit var assignments: List<PlaylistAssignment>
 
-	@PlanningScore(bendableHardLevelsSize = 4, bendableSoftLevelsSize = 4)
+	@PlanningScore(bendableHardLevelsSize = 4, bendableSoftLevelsSize = 5)
 	lateinit var score: BendableScore
 
 	constructor(settings: PlaylistSettings,
