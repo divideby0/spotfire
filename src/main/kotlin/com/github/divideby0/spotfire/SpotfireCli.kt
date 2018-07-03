@@ -10,7 +10,6 @@ import org.optaplanner.core.api.solver.SolverFactory
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import kotlinx.cli.*
-import org.apache.commons.lang3.StringUtils
 import org.slf4j.LoggerFactory
 import kotlin.system.exitProcess
 
@@ -154,6 +153,7 @@ object SpotfireCli {
           } else {
             sb.append(track.key)
           }
+          sb.append(" =>")
           log.info(sb.toString())
         }
         log.info(a.toString())
