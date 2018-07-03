@@ -146,6 +146,14 @@ rule "Track transitions should use preferred key changes"
     scoreHolder.addSoftConstraintMatch(kcontext, 0, $penalty);
 end
 
+rule "First transition should be same key"
+    when
+    TrackTransition(previousPosition == 0, keyChangeType != KeyChangeType.SAME_KEY)
+
+    then
+    scoreHolder.addSoftConstraintMatch(kcontext, 0, -1000);
+end
+
 declare KeyChangeTypeStreak
     type: KeyChangeType
     startPosition: Integer
