@@ -23,7 +23,7 @@ object SpotfireCli {
     val accessToken by cli.flagValueArgument("-a", "--access-token", "Spotify access token (required)")
     val sourcePlaylistUri by cli.flagValueArgument("-p", "--playlist-uri", "Spotify playlist URI (required)")
     val providedPlaylistName by cli.flagValueArgument("-n", "--playlist-name", "Destination playlist name")
-    val tracksBetweenArtistRepeat by cli.flagValueArgument("-t", "--tracks-between-artist-repeat", "Minimum tracks between artist repeat", 7) { it.toInt() }
+    val minTracksBetweenArtistRepeat by cli.flagValueArgument("-t", "--tracks-between-artist-repeat", "Minimum tracks between artist repeat", 7) { it.toInt() }
     val allowExplicit by cli.flagValueArgument("-e", "--explicit", "Allow explicit tracks", true) { it.toBoolean() }
     val dryRun by cli.flagArgument("--dry-run", "Dry run")
 
@@ -40,7 +40,7 @@ object SpotfireCli {
     val spotify = SpotifyClient(accessToken = accessToken.orEmpty())
 
     val settings = PlaylistSettings(
-      mimimumTracksBetweenSameArtist = tracksBetweenArtistRepeat,
+      minTracksBetweenArtistRepeat = minTracksBetweenArtistRepeat,
       allowExplicit = allowExplicit,
       minimumSameKeyStreak = 2,
       maximumSameKeyStreak = 4,
