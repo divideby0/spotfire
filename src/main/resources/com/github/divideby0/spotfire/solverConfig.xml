@@ -3,7 +3,7 @@
     <environmentMode>PRODUCTION</environmentMode>
     <!--<environmentMode>FULL_ASSERT</environmentMode>-->
     <!--<environmentMode>FAST_ASSERT</environmentMode>-->
-    <solutionClass>com.github.divideby0.spotfire.domain.Playlist</solutionClass>
+    <solutionClass>com.github.divideby0.spotfire.domain.SpotfirePlaylist</solutionClass>
     <entityClass>com.github.divideby0.spotfire.domain.PlaylistAssignment</entityClass>
 
     <scoreDirectorFactory>
@@ -11,32 +11,29 @@
     </scoreDirectorFactory>
 
     <termination>
-        <secondsSpentLimit>280</secondsSpentLimit>
-        <bestScoreLimit>[0/0/0/0]hard/[0/0/0/0/0]soft</bestScoreLimit>
+        <secondsSpentLimit>1200</secondsSpentLimit>
+        <bestScoreLimit>[0/0/0/0]hard/[0/0/-1000/-1000/-1000]soft</bestScoreLimit>
     </termination>
     <constructionHeuristic>
-        <termination>
-            <secondsSpentLimit>120</secondsSpentLimit>
-        </termination>
         <constructionHeuristicType>FIRST_FIT_DECREASING</constructionHeuristicType>
     </constructionHeuristic>
-    <localSearch>
-        <termination>
-            <unimprovedStepCountLimit>40</unimprovedStepCountLimit>
-        </termination>
-        <unionMoveSelector>
-            <cacheType>PHASE</cacheType>
-            <selectionOrder>RANDOM</selectionOrder>
-            <changeMoveSelector/>
-            <swapMoveSelector/>
-        </unionMoveSelector>
-        <acceptor>
-            <simulatedAnnealingStartingTemperature>[8/4/4/4]hard/[10/10/10/10/1000]soft</simulatedAnnealingStartingTemperature>
+    <!--<localSearch>-->
+        <!--<termination>-->
+            <!--<unimprovedStepCountLimit>200</unimprovedStepCountLimit>-->
+        <!--</termination>-->
+        <!--<unionMoveSelector>-->
+            <!--<cacheType>PHASE</cacheType>-->
+            <!--<selectionOrder>RANDOM</selectionOrder>-->
+            <!--<changeMoveSelector/>-->
+            <!--<swapMoveSelector/>-->
+        <!--</unionMoveSelector>-->
+        <!--<acceptor>-->
+            <!--<simulatedAnnealingStartingTemperature>[8/4/4/4]hard/[10/10/10/10/1000]soft</simulatedAnnealingStartingTemperature>-->
             <!--<entityTabuRatio>0.05</entityTabuRatio>-->
-            <!--<valueTabuSize>50</valueTabuSize>-->
-        </acceptor>
-        <forager>
-            <acceptedCountLimit>64</acceptedCountLimit>
-        </forager>
-    </localSearch>
+            <!--&lt;!&ndash;<valueTabuSize>50</valueTabuSize>&ndash;&gt;-->
+        <!--</acceptor>-->
+        <!--<forager>-->
+            <!--<acceptedCountLimit>4</acceptedCountLimit>-->
+        <!--</forager>-->
+    <!--</localSearch>-->
 </solver>

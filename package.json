@@ -1,0 +1,6 @@
+{
+  "devDependencies": {
+    "serverless-domain-manager": "^2.4.0",
+    "serverless-kms-secrets": "^1.0.3"
+  }
+}

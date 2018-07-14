@@ -9,24 +9,25 @@ import org.optaplanner.core.api.domain.valuerange.ValueRangeProvider
 import org.optaplanner.core.api.score.buildin.bendable.BendableScore
 
 @PlanningSolution
-class Playlist() {
+class SpotfirePlaylist() {
 	@ProblemFactCollectionProperty
 	lateinit var artists: List<SpotifyArtist>
 
 	@ProblemFactCollectionProperty
 	lateinit var albums: List<SpotifyAlbum>
 
-  @ProblemFactCollectionProperty
-  lateinit var keys: List<Key>
+	@ProblemFactCollectionProperty
+	lateinit var keys: List<Key>
 
-  @ProblemFactCollectionProperty
+	@ProblemFactCollectionProperty
+    @ValueRangeProvider(id = "trackRange")
 	lateinit var tracks: List<SpotifyTrack>
 
-  @ProblemFactProperty
-  lateinit var settings: PlaylistSettings
+	@ProblemFactProperty
+	lateinit var settings: PlaylistSettings
 
-	@ValueRangeProvider(id = "trackRange")
-	fun getTrackRange() = listOf(*tracks.toTypedArray(), null)
+	@ValueRangeProvider(id = "trackRangeWithNull")
+	fun getTrackRangeWithNull() = listOf(*tracks.toTypedArray(), null)
 
 	@PlanningEntityCollectionProperty
 	lateinit var assignments: List<PlaylistAssignment>
@@ -40,11 +41,11 @@ class Playlist() {
               keys: List<Key>,
               tracks: List<SpotifyTrack>,
               assignments: List<PlaylistAssignment>): this() {
-		this.settings = settings
-    this.artists = artists
-		this.albums = albums
-    this.keys = keys
-		this.tracks = tracks
-    this.assignments = assignments
+        this.settings = settings
+        this.artists = artists
+        this.albums = albums
+        this.keys = keys
+        this.tracks = tracks
+        this.assignments = assignments
 	}
 }

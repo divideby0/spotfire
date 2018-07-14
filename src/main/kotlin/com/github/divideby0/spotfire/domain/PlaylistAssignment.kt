@@ -8,7 +8,6 @@ import org.optaplanner.core.api.domain.variable.PlanningVariable
 class PlaylistAssignment: Comparable<PlaylistAssignment> {
 	var position: Int = -1
 
-
 	@PlanningVariable(valueRangeProviderRefs = ["trackRange"], nullable = true)
 	var track: SpotifyTrack? = null
 

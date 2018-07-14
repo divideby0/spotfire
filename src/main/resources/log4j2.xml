@@ -1,18 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration packages="com.amazonaws.services.lambda.runtime.log4j2.LambdaAppender">
     <Appenders>
-        <Lambda name="Lambda">
+        <Console name="Console">
             <PatternLayout>
-                <pattern>%d{yyyy-MM-dd HH:mm:ss} %X{AWSRequestId} %-5p %c{1}:%L - %m</pattern>
+                <pattern>%d{yyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n</pattern>
             </PatternLayout>
-        </Lambda>
+        </Console>
+        <File name="File" fileName="logs/spotfire-%d{yyy-MM-dd HH:mm:ss.SSS}.log" immediateFlush="true">
+            <PatternLayout pattern="%d{yyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
+        </File>
     </Appenders>
     <Loggers>
-        <Root level="debug">
-            <AppenderRef ref="Lambda" />
-        </Root>
         <Logger name="org.drools" level="INFO" additivity="false">
-            <Appender-ref ref="Lambda"/>
+            <Appender-ref ref="Console"/>
+            <Appender-ref ref="File"/>
         </Logger>
+        <Root level="debug">
+            <AppenderRef ref="Console" />
+            <AppenderRef ref="File"/>
+        </Root>
     </Loggers>
 </Configuration>

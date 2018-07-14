@@ -1,0 +1,131 @@
+package spotify;
+
+option java_package = "com.github.divideby0.spotfire.proto";
+option java_outer_classname = "SpotifyProtos";
+
+message Artist {
+    required string id = 1;
+    required string name = 2;
+    optional int32 popularity = 3;
+    repeated string genres = 4;
+}
+
+enum AlbumType {
+    ALBUM = 0;
+    APPEARS_ON = 1;
+    COMPILATION = 2;
+    SINGLE = 3;
+}
+
+enum ReleaseDatePrecision {
+    DAY = 0;
+    MONTH = 1;
+    YEAR = 2;
+}
+
+message Album {
+    required string id = 1;
+    required string uri = 2;
+    required string name = 3;
+    repeated string artistIds = 4;
+    optional AlbumType albumType = 5;
+    optional string label = 6;
+    repeated string genres = 7;
+    optional int32 popularity = 8;
+    optional string releaseDate = 9;
+    optional ReleaseDatePrecision releaseDatePrecision = 10;
+}
+
+enum Mode {
+    MAJOR = 0;
+    MINOR = 1;
+}
+
+message AudioFeatures {
+    optional float acousticness = 1;
+    optional float danceability = 2;
+    optional float energy = 3;
+    optional float instrumentalness = 4;
+    optional float speechiness = 5;
+    optional float valence = 6;
+    optional float liveness = 7;
+}
+
+message AudioAnalysisMeasure {
+    required float confidence = 1;
+    required float duration = 2;
+    required float start = 3;
+}
+
+message AudioAnalysisDetails {
+    optional float loudness = 1;
+    optional float tempo = 2;
+    optional float tempoConfidence = 3;
+    optional int32 key = 4;
+    optional float keyConfidence = 5;
+    optional Mode mode = 6;
+    optional float modeConfidence = 7;
+    optional int32 timeSignature = 8;
+    optional float timeSignatureConfidence = 9;
+}
+
+message AudioAnalysisSection {
+    required AudioAnalysisMeasure measure = 1;
+    optional AudioAnalysisDetails details = 2;
+}
+
+message AudioAnalysis {
+    optional int64 numSamples = 1;
+    optional float durationSeconds = 2;
+    optional int32 offsetSeconds = 3;
+    optional int32 windowSeconds = 4;
+    optional int64 sampleRate = 5;
+    optional int32 channels = 6;
+    optional float endOfFadeIn = 7;
+    optional float startOfFadeOut = 8;
+    optional AudioAnalysisDetails details = 9;
+    repeated AudioAnalysisSection sections = 10;
+}
+
+message Track {
+    required string id = 1;
+    required string uri = 2;
+    required string name = 3;
+    optional string albumId = 4;
+    repeated string artistIds = 5;
+    optional int32 trackNumber = 6;
+    optional int32 discNumber = 7;
+    optional int32 durationMs = 8;
+    optional bool explicit = 9;
+    optional int32 popularity = 10;
+    optional string previewUrl = 11;
+    optional AudioFeatures features = 12;
+    optional AudioAnalysis analysis = 13;
+}
+
+message Image {
+    required string url = 1;
+    optional int32 height = 2;
+    optional int32 width = 3;
+}
+
+message User {
+    required string id = 1;
+    required string uri = 2;
+    optional string displayName = 3;
+    optional string email = 4;
+    optional int32 followers = 5;
+    repeated Image images = 6;
+}
+
+message Playlist {
+    required string id = 1;
+    required string uri = 2;
+    required string name = 3;
+    required User owner = 4;
+    repeated Artist artists = 5;
+    repeated Album albums = 6;
+    repeated Track tracks = 7;
+    optional Image image = 8;
+    optional string snapshotId = 9;
+}

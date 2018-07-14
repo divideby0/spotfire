@@ -1,0 +1,28 @@
+package com.github.divideby0.spotfire
+
+import org.optaplanner.core.api.score.buildin.bendable.BendableScoreHolder;
+import com.github.divideby0.spotfire.domain.*;
+import java.util.List;
+import java.util.Set;
+
+global BendableScoreHolder scoreHolder;
+
+rule "Set first track position"
+    when
+    $track: SpotifyTrack(position != 0)
+    FirstTrack($track == track)
+
+    then
+    $track.setPosition(0);
+    update($track);
+end
+
+rule "Set next track position"
+    when
+    $track: SpotifyTrack(position != null, nextTrack.position != position+1, $nextTrack: nextTrack, $position: position)
+
+    then
+    $nextTrack.setPosition($position+1);
+    update($nextTrack);
+end
+

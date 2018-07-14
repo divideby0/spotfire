@@ -9,7 +9,7 @@ import java.util.Set;
 global BendableScoreHolder scoreHolder;
 
 salience 99
-rule "Should identify transitions"
+rule "Identify transitions"
     when
     $previous: PlaylistAssignment($pos1: position, track != null)
     $next: PlaylistAssignment(position == $pos1 + 1, track != null)
@@ -88,12 +88,12 @@ declare NoArtistStreak
     length: Integer
 end
 
-rule "should identify no artist streaks"
+rule "Identify no artist streaks"
     when
     $artist: SpotifyArtist()
-    PlaylistAssignment(track != null, track.artists contains $artist, $startPos: position)
-    PlaylistAssignment(track != null, position > $startPos, track.artists contains $artist, $endPos: position)
-    not PlaylistAssignment(track != null, position > $startPos, position < $endPos, $artist memberOf track.artists)
+    PlaylistAssignment(track != null, track.artists != null, $artist memberOf track.artists, $startPos: position)
+    PlaylistAssignment(track != null, position > $startPos, track.artists != null, $artist memberOf track.artists, $endPos: position)
+    not PlaylistAssignment(track != null, position > $startPos, position < $endPos, track.artists != null, $artist memberOf track.artists)
 
     then
     NoArtistStreak streak = new NoArtistStreak();
@@ -106,12 +106,23 @@ end
 
 rule "Should not repeat same artist before minimum"
     when
+    $artist: SpotifyArtist()
+
+    $totalTracks: Number() from accumulate(
+        $a: PlaylistAssignment(track != null),
+        count($a)
+    )
+    $artistTracks: Number(intValue() > 0) from accumulate(
+        $a: PlaylistAssignment(track != null, track.artists contains $artist),
+        count($a)
+    )
     PlaylistSettings($min: minTracksBetweenArtistRepeat)
-    NoArtistStreak(length < $min, $length: length)
+    NoArtistStreak(length < $min && length < $totalTracks.doubleValue()/$artistTracks.doubleValue(), $length: length)
 
     then
-    Double penalty = -Math.pow($length-$min, 2);
-    scoreHolder.addSoftConstraintMatch(kcontext, 1, penalty.intValue());
+    Integer frequency = Double.valueOf($totalTracks.doubleValue() / $artistTracks.doubleValue()).intValue();
+    Double penalty = -Math.pow($length-Math.min($min, frequency), 2);
+    scoreHolder.addSoftConstraintMatch(kcontext, 0, penalty.intValue());
 end
 
 rule "Transition key scales should contain each other's root note"
@@ -206,7 +217,7 @@ rule "Same key streaks should be above minimum length"
     scoreHolder.addSoftConstraintMatch(kcontext, 2, $length-$min);
 end
 
-rule "Should not change tempo drastically"
+rule "Should not change tempo above maximum"
     when
     PlaylistSettings($max: maximumTempoChange)
     TrackTransition(Math.abs(tempoChange) > $max, $change: tempoChange);
@@ -216,7 +227,7 @@ rule "Should not change tempo drastically"
     scoreHolder.addSoftConstraintMatch(kcontext, 3, penalty.intValue());
 end
 
-rule "Should not change energy drastically"
+rule "Should not change energy above maximum"
     when
     PlaylistSettings($max: maximumEnergyChange)
     TrackTransition(Math.abs(energyChange) > $max, $change: energyChange)
