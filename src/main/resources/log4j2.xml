@@ -6,9 +6,9 @@
                 <pattern>%d{yyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n</pattern>
             </PatternLayout>
         </Console>
-        <File name="File" fileName="logs/spotfire-%d{yyy-MM-dd HH:mm:ss.SSS}.log" immediateFlush="true">
+        <RollingFile name="File" fileName="log/spotfire-${date:yyyy-MM-dd}.log">
             <PatternLayout pattern="%d{yyy-MM-dd HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
-        </File>
+        </RollingFile>
     </Appenders>
     <Loggers>
         <Logger name="org.drools" level="warn" additivity="false">
