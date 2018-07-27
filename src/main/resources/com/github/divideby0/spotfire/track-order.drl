@@ -105,7 +105,7 @@ rule "Should play song once and only once"
     )
 
     then
-    if($playCount == 0) {
+    if($playCount.intValue() == 0) {
       scoreHolder.addHardConstraintMatch(kcontext, 0, -1);
     } else {
         scoreHolder.addHardConstraintMatch(kcontext, 0, new Double(-Math.pow($playCount.intValue(), 2)).intValue());
