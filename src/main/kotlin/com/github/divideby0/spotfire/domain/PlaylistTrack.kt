@@ -8,7 +8,7 @@ import org.optaplanner.core.api.domain.variable.PlanningVariable
 
 @PlanningEntity(difficultyComparatorClass = PlaylistTrackDifficultyComparator::class)
 class PlaylistTrack {
-    @PlanningVariable(valueRangeProviderRefs=["tracks"], nullable = true)
+    @PlanningVariable(valueRangeProviderRefs=["tracks"])
     var track: SpotifyTrack? = null
     var position: Int? = null
 
