@@ -120,7 +120,7 @@ rule "should force first track"
     PlaylistTrack(
         position == 0,
         track != null,
-        track != track
+        track != $track
     )
 
     then
