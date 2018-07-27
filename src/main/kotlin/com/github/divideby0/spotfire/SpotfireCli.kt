@@ -46,9 +46,6 @@ object SpotfireCli {
             exitProcess(1)
         }
 
-        val solverFactory: SolverFactory<SpotfirePlaylist> = SolverFactory.createFromXmlResource("com/github/divideby0/spotfire/solverConfig.xml")
-        val solver: Solver<SpotfirePlaylist> = solverFactory.buildSolver()
-
         val refreshToken = if (refreshTokenArg.isNullOrEmpty()) {
             print("Refresh token: ")
             readLine()!!.trim()
@@ -57,6 +54,7 @@ object SpotfireCli {
         }
 
         val io = SpotifyIO(clientId, clientSecret)
+        val service = SpotfireService()
 
         val settings = PlaylistSettings(
             minTracksBetweenArtistRepeat = minTracksBetweenArtistRepeat,
@@ -92,8 +90,8 @@ object SpotfireCli {
 
         val problem = SpotifyProtoUtils.toSpotfirePlaylist(sourcePlaylistProto, settings)
 
-        val solution = solver.solve(problem)
-        val scoreDirector = solver.scoreDirectorFactory.buildScoreDirector()
+        val solution = service.solvePlaylist(problem)
+        val scoreDirector = service.solver.scoreDirectorFactory.buildScoreDirector()
         scoreDirector.workingSolution = solution
 
         log.info("")
