@@ -9,8 +9,8 @@ description = """Spotify playlist optimizer using music theory for smooth(er) tr
 
 mainClassName = 'com.github.divideby0.spotfire.SpotfireCli'
 
-sourceCompatibility = 1.5
-targetCompatibility = 1.5
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
 tasks.withType(JavaCompile) {
   options.encoding = 'UTF-8'
 }
