@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <solver>
     <!--<environmentMode>PRODUCTION</environmentMode>-->
-    <environmentMode>FAST_ASSERT</environmentMode>
+    <!--<environmentMode>FAST_ASSERT</environmentMode>-->
     <!--<environmentMode>REPRODUCIBLE</environmentMode>-->
     <solutionClass>com.github.divideby0.spotfire.domain.SpotfirePlaylist</solutionClass>
     <entityClass>com.github.divideby0.spotfire.domain.PlaylistTrack</entityClass>
