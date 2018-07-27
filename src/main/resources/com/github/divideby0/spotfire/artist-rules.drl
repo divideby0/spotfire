@@ -185,5 +185,5 @@ rule "should distribute genre throughout paylist"
 //    System.out.println("artist: " + $gap.getArtist().getName() + ", length: " + $gapLength.intValue());
     Double frequency = $allTrackCount.doubleValue() / $genreTrackCount.doubleValue();
     Double penalty = -Math.pow($gapLength.doubleValue()-frequency, 1.2D);
-    scoreHolder.addSoftConstraintMatch(kcontext, 1, penalty.intValue());
+    scoreHolder.addSoftConstraintMatch(kcontext, 2, penalty.intValue());
 end
