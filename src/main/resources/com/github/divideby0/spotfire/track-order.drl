@@ -8,98 +8,98 @@ import java.util.Set;
 
 global BendableScoreHolder scoreHolder;
 
-rule "Set next track"
-    salience 10
-    when
-    $previous: PlaylistTrack(
-        position != null,
-        track!= null,
-        $p1: position,
-        $oldNextTrack: nextTrack
-    )
-    $next: PlaylistTrack(
-        position == $p1 + 1,
-        track != null,
-        track != $oldNextTrack,
-        $newNextTrack: track
-    )
-
-    then
-    modify($previous) {
-      setNextTrack($newNextTrack)
-    }
-end
-
-rule "Clear next track if no track selected in next position"
+//rule "Set next track"
 //    salience 10
-    when
-    $pt: PlaylistTrack(
-        nextTrack != null,
-        position != null,
-        $nextPosition: position + 1
-    )
-    PlaylistTrack(
-        track == null,
-        position != null,
-        position == $nextPosition
-    )
-
-    then
-//    System.out.println("position " + $pt.getPosition() + " clearing next track");
-    $pt.setNextTrack(null);
-    update($pt);
-end
+//    when
+//    $pt: PlaylistTrack(
+//        position != null,
+//        track!= null,
+//        $p1: position,
+//        $oldNextTrack: nextTrack,
+//        $nextPosition: (position + 1)
+//    )
+//    $next: PlaylistTrack(
+//        position == $nextPosition,
+//        track != null,
+//        track != $oldNextTrack,
+//        $newNextTrack: track
+//    )
+//
+//    then
+//    $pt.setNextTrack($newNextTrack);
+//    update($pt);
+//end
+//
+//rule "Clear next track if no track selected in next position"
+////    salience 10
+//    when
+//    $pt: PlaylistTrack(
+//        nextTrack != null,
+//        position != null,
+//        $nextPosition: (position + 1)
+//    )
+//    PlaylistTrack(
+//        track == null,
+//        position != null,
+//        position == $nextPosition
+//    )
+//
+//    then
+////    System.out.println("position " + $$pt.getPosition() + " clearing next track");
+//    $pt.setNextTrack(null);
+//    update($pt);
+//end
 
 rule "Set previous track"
     salience 10
     when
-    $this: PlaylistTrack(
+    $pt: PlaylistTrack(
         position != null,
-        track != null,
-        $p1: position,
+        position != 0,
+        $position: position,
         $oldPreviousTrack: previousTrack,
-        $track: track
+        $previousPosition: (position - 1)
     )
     $previous: PlaylistTrack(
-        position == $p1 - 1,
-        track != null,
+        position == $previousPosition,
         track != $oldPreviousTrack,
         $newPreviousTrack: track
     )
 
     then
-    $this.setPreviousTrack($newPreviousTrack);
-    update($this);
-end
-
-
-
-rule "Clear previous track if no track selected in previous position"
-//    salience 10
-    when
-    $pt: PlaylistTrack(
-        previousTrack != null,
-        position != null,
-        position != 0,
-        $previousPosition: position - 1
-    )
-    PlaylistTrack(
-        track == null,
-        position != null,
-        position == $previousPosition
-    )
-
-    then
-//    System.out.println("position " + $pt.getPosition() + " clearing previous track");
-    $pt.setPreviousTrack(null);
+//    System.out.println("currentPos: " + $position + ", prevPos: " + $previousPosition + ", oldPreviousTrack: " + $oldPreviousTrack + ", newPreviousTrack: " + $newPreviousTrack);
+    $pt.setPreviousTrack($newPreviousTrack);
     update($pt);
 end
+
+
+
+//rule "Clear previous track if no track selected in previous position"
+////    salience 10
+//    when
+//    $pt: PlaylistTrack(
+//        previousTrack != null,
+//        position != null,
+//        position != 0,
+//        $previousPosition: (position - 1)
+//    )
+//    PlaylistTrack(
+//        track == null,
+//        position != null,
+//        position == $previousPosition
+//    )
+//
+//    then
+////    System.out.println("position " + $$pt.getPosition() + " clearing previous track");
+//    $pt.setPreviousTrack(null);
+//    update($pt);
+//end
 
 rule "Should play song once and only once"
     salience 5
     when
     $track: SpotifyTrack()
-    $playCount: Number(intValue() > 1 || intValue() == 0) from accumulate(
+    $playCount: Number((intValue > 1) || (intValue == 0)) from accumulate(
         $pt: PlaylistTrack(track == $track),
         count($pt)
     )

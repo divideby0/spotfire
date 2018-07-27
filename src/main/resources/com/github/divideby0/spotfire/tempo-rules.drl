@@ -12,52 +12,79 @@ global BendableScoreHolder scoreHolder;
 rule "set tempo change"
     no-loop
     when
+    $currentTrack: SpotifyTrack(
+        $currentTempo: startTempo
+    )
+    $previousTrack: SpotifyTrack(
+        ($currentTempo - endTempo > 30) || (endTempo - $currentTempo > 30),
+        $previousTempo: endTempo
+    )
     $pt: PlaylistTrack(
-        track != null,
-        previousTrack != null,
-        $trackTempo: track.startTempo,
-        $previousTrackTempo: previousTrack.endTempo,
-        tempoChange != (track.startTempo - previousTrack.endTempo),
-        $change: (track.startTempo - previousTrack.endTempo)
+        track == $currentTrack,
+        previousTrack == $previousTrack
     )
 
     then
-//    System.out.println("prev: " + $previousTrackTempo + ", current: " + $trackTempo + ", tempo change: " + $change);
-    $pt.setTempoChange($change);
+    Float change = Math.abs($currentTempo - $previousTempo);
+    System.out.println("prev: " + $previousTempo + ", current: " + $currentTempo + ", tempo change: " + change);
+    $pt.setTempoChange(change);
+    update($pt);
+end
+
+rule "clear tempo change if current track not assigned"
+    when
+    $pt: PlaylistTrack(
+        track == null,
+        tempoChange != null
+    )
+
+    then
+    $pt.setTempoChange(null);
+    update($pt);
+end
+
+rule "clear tempo change if previous track not assigned"
+    when
+    $pt: PlaylistTrack(
+        previousTrack == null,
+        tempoChange != null
+    )
+
+    then
+    $pt.setTempoChange(null);
     update($pt);
 end
 
 rule "tempo change should not exceed 30 bpm"
     when
     PlaylistTrack(
-        tempoChange != null,
-        Math.abs(tempoChange) > 30,
+        tempoChange > 30,
         $tempoChange: tempoChange
     )
 
     then
 //    System.out.println("tempo change: " + $tempoChange);
-    Integer penalty = Float.valueOf((30 - Math.abs($tempoChange))*10).intValue();
+    Integer penalty = Double.valueOf((30 - $tempoChange)*10).intValue();
     scoreHolder.addSoftConstraintMatch(kcontext, 3, penalty);
 end
 
-rule "tempo change average over 2 songs should not exceed 20 bpm"
-    when
-    PlaylistTrack(
-        $maxPosition: position,
-        $minPosition: position - 2
-    )
-    $averageChange: Number(floatValue() > 20) from accumulate(
-        PlaylistTrack(
-            track != null,
-            position <= $maxPosition,
-            position > $minPosition,
-            $tempoChange: Math.abs(tempoChange)
-        ),
-        average($tempoChange)
-    )
-
-    then
-    Integer penalty = Float.valueOf((30 - $averageChange.floatValue()*10)).intValue();
-    scoreHolder.addSoftConstraintMatch(kcontext, 3, penalty);
-end
+//rule "tempo change average over 2 songs should not exceed 20 bpm"
+//    when
+//    PlaylistTrack(
+//        $maxPosition: position,
+//        $minPosition: position - 2
+//    )
+//    $averageChange: Number(floatValue() > 20) from accumulate(
+//        PlaylistTrack(
+//            track != null,
+//            position <= $maxPosition,
+//            position > $minPosition,
+//            $tempoChange: Math.abs(tempoChange)
+//        ),
+//        average($tempoChange)
+//    )
+//
+//    then
+//    Integer penalty = Float.valueOf((30 - $averageChange.floatValue()*10)).intValue();
+//    scoreHolder.addSoftConstraintMatch(kcontext, 3, penalty);
+//end
