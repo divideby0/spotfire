@@ -7,6 +7,8 @@ import com.github.divideby0.spotfire.spotify.SpotifyProtoUtils
 import com.github.divideby0.spotfire.utils.UberJarKieClassLoader
 import org.optaplanner.core.api.solver.Solver
 import org.optaplanner.core.api.solver.SolverFactory
+import org.reflections.Reflections
+import org.reflections.scanners.ResourcesScanner
 
 class SpotfireService {
     val solverFactory: SolverFactory<SpotfirePlaylist>
@@ -15,9 +17,10 @@ class SpotfireService {
     init {
         // needed to get kie to work in a fat jar as per here:
         // https://stackoverflow.com/a/47514137
-        val localKieConfUrls = listOf(
-            "drools-compiler-kie.conf", "drools-core-kie.conf", "optaplanner-core-kie.conf"
-        ).map { ClassLoader.getSystemResource("META-INF/$it") }.toTypedArray()
+        val localKieConfUrls = Reflections("META-INF", ResourcesScanner())
+            .getResources(Regex(".*-kie.conf").toPattern())
+            .map { ClassLoader.getSystemResource(it) }
+            .toTypedArray()
 
         Thread.currentThread().contextClassLoader = UberJarKieClassLoader(Thread.currentThread().contextClassLoader, localKieConfUrls)
         solverFactory = SolverFactory.createFromXmlResource("com/github/divideby0/spotfire/solverConfig.xml")
