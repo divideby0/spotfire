@@ -11,6 +11,7 @@ import com.wrapper.spotify.model_objects.miscellaneous.AudioAnalysisMeasure
 import com.wrapper.spotify.model_objects.miscellaneous.AudioAnalysisSection
 import com.wrapper.spotify.model_objects.miscellaneous.AudioAnalysisTrack
 import com.wrapper.spotify.model_objects.specification.*
+import org.nield.kotlinstatistics.standardDeviation
 import org.slf4j.LoggerFactory
 import java.time.Duration
 import java.time.LocalDate
@@ -18,6 +19,12 @@ import java.time.temporal.ChronoUnit
 
 object SpotifyProtoUtils {
     val log = LoggerFactory.getLogger(this.javaClass)
+
+    val keyMap = ChromaticNote.values().flatMap { note ->
+        Modality.values().map { mode ->
+            Pair(note, mode) to Key(note, mode)
+        }
+    }.toMap()
 
     fun toAlbumProto(album: Album): SpotifyProtos.Album {
         val b = SpotifyProtos.Album.newBuilder()
@@ -172,6 +179,24 @@ object SpotifyProtoUtils {
         return b.build()
     }
 
+    fun getKey(details: SpotifyProtos.AudioAnalysisDetails): Key {
+        val rootNote = ChromaticNote.values()[details.key]
+        val mode = Modality.keyOf(details.mode.ordinal)
+        return keyMap.getValue(Pair(rootNote, mode))
+    }
+
+    fun getAlternativeSection(trackDetails: SpotifyProtos.AudioAnalysisDetails, section: SpotifyProtos.AudioAnalysisSection?): SpotifyProtos.AudioAnalysisDetails {
+        return if(section == null) {
+            trackDetails
+        } else {
+            if(section.measure.duration > 10 && section.details.keyConfidence > trackDetails.keyConfidence) {
+                section.details
+            } else {
+                trackDetails
+            }
+        }
+    }
+
     fun toSpotfirePlaylist(proto: SpotifyProtos.Playlist, settings: PlaylistSettings = PlaylistSettings()): SpotfirePlaylist {
         val genreMap = proto.artistsList
             .flatMap { it.genresList }
@@ -208,15 +233,19 @@ object SpotifyProtoUtils {
             )
         }.toMap()
 
-        val keyMap = ChromaticNote.values().flatMap { note ->
-            Modality.values().map { mode ->
-                Pair(note, mode) to Key(note, mode)
-            }
-        }.toMap()
-
         val tracks = proto.tracksList.map { pt ->
-            val rootNote = ChromaticNote.values()[pt.analysis.details.key]
-            val mode = Modality.keyOf(pt.analysis.details.mode.ordinal)
+            pt.analysis.sectionsList.map { s-> s.details.keyConfidence }
+
+//            val keyConfidenceTolerance = pt.analysis.sectionsList
+//                .map { it.details.keyConfidence }.standardDeviation()
+//                .div(2)
+
+//            val keyConfidenceTolerance = 0
+
+//            val minKeyConfidence = pt.analysis.details.keyConfidence - keyConfidenceTolerance
+            val startDetails = getAlternativeSection(pt.analysis.details, pt.analysis.sectionsList.firstOrNull())
+            val endDetails = getAlternativeSection(pt.analysis.details, pt.analysis.sectionsList.lastOrNull())
+
             SpotifyTrack(
                 spotifyId = pt.id,
                 spotifyUri = pt.uri,
@@ -229,8 +258,21 @@ object SpotifyProtoUtils {
                 explicit = pt.explicit,
                 popularity = pt.popularity,
                 previewUrl = pt.previewUrl,
-                key = keyMap.getValue(Pair(rootNote, mode)),
-                tempo = pt.analysis.details.tempo,
+
+                trackKey = getKey(pt.analysis.details),
+                trackKeyConfidence = pt.analysis.details.keyConfidence,
+                startKey = getKey(startDetails),
+                startKeyConfidence = startDetails.keyConfidence,
+                endKey = getKey(endDetails),
+                endKeyConfidence = endDetails.keyConfidence,
+
+                trackTempo = pt.analysis.details.tempo,
+                trackTempoConfidence = pt.analysis.details.tempoConfidence,
+                startTempo = startDetails.tempo,
+                startTempoConfidence = startDetails.tempoConfidence,
+                endTempo = endDetails.tempo,
+                endTempoConfidence = endDetails.tempoConfidence,
+
                 timeSignature = pt.analysis.details.timeSignature,
                 loudness = pt.analysis.details.loudness,
                 acousticness = pt.features.acousticness,
@@ -248,8 +290,7 @@ object SpotifyProtoUtils {
             artistMap.values.toList(),
             albumMap.values.toList(),
             keyMap.values.toList(),
-            tracks,
-            assignments = 0.until(tracks.size).map { i -> PlaylistAssignment(i) }
+            tracks.shuffled()
         )
     }
 }

@@ -1,0 +1,189 @@
+package com.github.divideby0.spotfire
+
+import org.optaplanner.core.api.score.buildin.bendable.BendableScoreHolder;
+import com.github.divideby0.spotfire.domain.*;
+import java.util.List;
+import java.util.Set;
+//import com.github.divideby0.spotfire.solver.TransitionUtils;
+
+global BendableScoreHolder scoreHolder;
+
+declare TrackArtist
+  track: SpotifyTrack
+  artist: SpotifyArtist
+end
+
+declare ArtistGap
+    artist: SpotifyArtist
+    lastPosition: Integer
+    nextPosition: Integer
+    length: Integer
+end
+
+rule "add TrackArtist records"
+    when
+    $artist: SpotifyArtist()
+    $track: SpotifyTrack($artist memberOf artists)
+    not TrackArtist(artist == $artist, track == $track)
+
+    then
+    TrackArtist ta = new TrackArtist();
+    ta.setArtist($artist);
+    ta.setTrack($track);
+    insert(ta);
+end
+
+rule "detect artist gaps"
+    no-loop
+    when
+    $artist: SpotifyArtist()
+    PlaylistTrack(
+        track != null,
+        $t1: track,
+        $p1: position
+    )
+    TrackArtist(
+        artist == $artist,
+        track == $t1
+    )
+    PlaylistTrack(
+        track != null,
+        position > $p1,
+        $t2: track,
+        $p2: position,
+        $gapLength: position - $p1 + 1
+    )
+    TrackArtist(
+        artist == $artist,
+        track == $t2
+    )
+    not ArtistGap(
+       artist == $artist,
+       lastPosition == $p1,
+       length <= $gapLength
+    )
+
+    then
+    ArtistGap gap = new ArtistGap();
+    gap.setArtist($artist);
+    gap.setLastPosition($p1);
+    gap.setNextPosition($p2);
+    gap.setLength($p2 - $p1 + 1);
+//    System.out.println("artist: " + $artist.getName() + ", length: " + gap.getLength());
+    insertLogical(gap);
+end
+
+rule "should distribute artist throughout paylist"
+    when
+    $artist: SpotifyArtist()
+    $allTrackCount: Number(intValue() > 0) from accumulate(
+        $track: SpotifyTrack(),
+        count($track)
+    )
+    $artistTrackCount: Number(intValue() > 0) from accumulate(
+        $ta: TrackArtist(artist == $artist),
+        count($ta)
+    )
+    $gap: ArtistGap(
+        artist == $artist,
+        length < Math.min(30, Math.ceil($allTrackCount / $artistTrackCount)),
+        $gapLength: length
+    )
+
+    then
+//    System.out.println("artist: " + $gap.getArtist().getName() + ", length: " + $gapLength.intValue());
+    Double frequency = $allTrackCount.doubleValue() / $artistTrackCount.doubleValue();
+    Double penalty = -Math.pow($gapLength.doubleValue()-frequency, 2.0D);
+    scoreHolder.addSoftConstraintMatch(kcontext, 0, penalty.intValue());
+end
+
+declare TrackGenre
+  track: SpotifyTrack
+  genre: SpotifyGenre
+end
+
+declare GenreGap
+    genre: SpotifyGenre
+    lastPosition: Integer
+    nextPosition: Integer
+    length: Integer
+end
+
+rule "add ArtistGenre records"
+    when
+    $genre: SpotifyGenre()
+    $artist: SpotifyArtist($genre memberOf genres)
+    TrackArtist(artist == $artist, $track: track)
+    not TrackGenre(genre == $genre, track == $track)
+
+    then
+    TrackGenre tg = new TrackGenre();
+    tg.setTrack($track);
+    tg.setGenre($genre);
+    insert(tg);
+end
+
+rule "detect genre gaps"
+    no-loop
+    when
+    $genre: SpotifyGenre()
+    PlaylistTrack(
+        track != null,
+        position != null,
+        $t1: track,
+        $p1: position
+    )
+    TrackGenre(
+        track == $t1,
+        genre == $genre
+    )
+    PlaylistTrack(
+        track != null,
+        position > $p1,
+        $t2: track,
+        $p2: position,
+        $gapLength: position - $p1 + 1
+    )
+    TrackGenre(
+        track == $t2,
+        genre == $genre
+    )
+    not GenreGap(
+       genre == $genre,
+       lastPosition == $p1,
+       length <= $gapLength
+    )
+
+    then
+    GenreGap gap = new GenreGap();
+    gap.setGenre($genre);
+    gap.setLastPosition($p1);
+    gap.setNextPosition($p2);
+    gap.setLength($p2 - $p1 + 1);
+//    System.out.println("artist: " + $artist.getName() + ", length: " + gap.getLength());
+    insertLogical(gap);
+end
+
+rule "should distribute genre throughout paylist"
+    when
+    $genre: SpotifyGenre()
+    $allTrackCount: Number(intValue() > 0) from accumulate(
+        $track: SpotifyTrack(),
+        count($track)
+    )
+    $genreTrackCount: Number(intValue() > 0) from accumulate(
+        $tg: TrackGenre(genre == $genre),
+        count($tg)
+    )
+    $gap: GenreGap(
+        genre == $genre,
+        length < Math.min(10, Math.ceil($allTrackCount / $genreTrackCount)),
+        $gapLength: length
+    )
+
+    then
+//    System.out.println("artist: " + $gap.getArtist().getName() + ", length: " + $gapLength.intValue());
+    Double frequency = $allTrackCount.doubleValue() / $genreTrackCount.doubleValue();
+    Double penalty = -Math.pow($gapLength.doubleValue()-frequency, 1.2D);
+    scoreHolder.addSoftConstraintMatch(kcontext, 1, penalty.intValue());
+end

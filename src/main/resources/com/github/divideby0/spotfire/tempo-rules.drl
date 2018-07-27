@@ -1,0 +1,37 @@
+package com.github.divideby0.spotfire
+
+import org.optaplanner.core.api.score.buildin.bendable.BendableScoreHolder;
+import com.github.divideby0.spotfire.domain.*;
+import java.util.List;
+import java.util.Set;
+import com.wrapper.spotify.enums.Modality;
+//import com.github.divideby0.spotfire.solver.TransitionUtils;
+
+global BendableScoreHolder scoreHolder;
+
+rule "set tempo change"
+    no-loop
+    when
+    $pt: PlaylistTrack(
+        track != null,
+        previousTrack != null,
+        tempoChange != track.startTempo - previousTrack.endTempo,
+        $change: track.startTempo - previousTrack.endTempo
+    )
+
+    then
+    $pt.setTempoChange($change);
+    update($pt);
+end
+
+rule "tempo change should not exceed 30 bpm"
+    when
+    PlaylistTrack(
+        tempoChange > 30 || tempoChange < -30,
+        $tempoChange: tempoChange
+    )
+
+    then
+    Integer penalty = Double.valueOf(30 - Math.abs($tempoChange)).intValue();
+    scoreHolder.addSoftConstraintMatch(kcontext, 3, penalty);
+end

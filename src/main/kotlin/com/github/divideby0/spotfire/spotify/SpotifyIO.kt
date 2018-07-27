@@ -19,7 +19,7 @@ class SpotifyIO(
     val albumsPerRequest: Int = 20,
     val artistsPerRequest: Int = 50,
     val tracksPerPlaylistAddition: Int = 20,
-    val rateLimit: Double = 10.0,
+    val rateLimit: Double = 8.0,
     private val httpManager: IHttpManager = SpotfireHttpManager(
         requestsPerSecond = rateLimit,
         totalConnections = rateLimit.toInt() * 3
@@ -162,7 +162,11 @@ class SpotifyIO(
 
     fun savePlaylist(api: SpotifyApi, solution: SpotfirePlaylist, playlistName: String, description: String, public: Boolean = true): Playlist {
         val user = api.currentUsersProfile.build().execute()
-        val trackUris = solution.assignments.map { it.track?.spotifyUri }
+        val trackUris = solution.playlistTracks
+            .filter { it.position != null }
+            .sortedBy { it.position }
+            .mapNotNull { it.track?.spotifyUri }
+
         log.info("Creating playlist '$playlistName' for user ${user.id} with ${trackUris.size} tracks")
 
         val playlist = api

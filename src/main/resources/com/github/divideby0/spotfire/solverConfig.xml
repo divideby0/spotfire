@@ -1,39 +1,57 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <solver>
-    <environmentMode>PRODUCTION</environmentMode>
+    <!--<environmentMode>PRODUCTION</environmentMode>-->
     <!--<environmentMode>FULL_ASSERT</environmentMode>-->
-    <!--<environmentMode>FAST_ASSERT</environmentMode>-->
+    <!--<environmentMode>REPRODUCIBLE</environmentMode>-->
     <solutionClass>com.github.divideby0.spotfire.domain.SpotfirePlaylist</solutionClass>
-    <entityClass>com.github.divideby0.spotfire.domain.PlaylistAssignment</entityClass>
+    <entityClass>com.github.divideby0.spotfire.domain.PlaylistTrack</entityClass>
+    <!--<entityClass>com.github.divideby0.spotfire.domain.FirstTrack</entityClass>-->
 
     <scoreDirectorFactory>
-        <scoreDrl>com/github/divideby0/spotfire/scoreRules.drl</scoreDrl>
+        <scoreDrl>com/github/divideby0/spotfire/track-order.drl</scoreDrl>
+        <scoreDrl>com/github/divideby0/spotfire/artist-rules.drl</scoreDrl>
+        <scoreDrl>com/github/divideby0/spotfire/key-rules.drl</scoreDrl>
+        <scoreDrl>com/github/divideby0/spotfire/tempo-rules.drl</scoreDrl>
+        <!--<initializingScoreTrend>ONLY_DOWN</initializingScoreTrend>-->
     </scoreDirectorFactory>
 
     <termination>
-        <secondsSpentLimit>1200</secondsSpentLimit>
+        <secondsSpentLimit>7200</secondsSpentLimit>
         <bestScoreLimit>[0/0/0/0]hard/[0/0/-1000/-1000/-1000]soft</bestScoreLimit>
     </termination>
+    <!--<constructionHeuristic>-->
+        <!--<queuedEntityPlacer>-->
+            <!--<entitySelector id="firstTrackSelector">-->
+                <!--<entityClass>com.github.divideby0.spotfire.domain.FirstTrack</entityClass>-->
+            <!--</entitySelector>-->
+        <!--</queuedEntityPlacer>-->
+    <!--</constructionHeuristic>-->
     <constructionHeuristic>
         <constructionHeuristicType>FIRST_FIT_DECREASING</constructionHeuristicType>
+        <!--&lt;!&ndash;&lt;!&ndash;<queuedEntityPlacer>&ndash;&gt;&ndash;&gt;-->
+            <!--&lt;!&ndash;&lt;!&ndash;<entitySelector id="playlistTrackSelector">&ndash;&gt;&ndash;&gt;-->
+                <!--&lt;!&ndash;&lt;!&ndash;<entityClass>com.github.divideby0.spotfire.domain.FollowupTrackClass>&ndash;&gt;&ndash;&gt;-->
+            <!--&lt;!&ndash;&lt;!&ndash;</entitySelector>&ndash;&gt;&ndash;&gt;-->
+        <!--&lt;!&ndash;&lt;!&ndash;</queuedEntityPlacer>&ndash;&gt;&ndash;&gt;-->
     </constructionHeuristic>
-    <!--<localSearch>-->
-        <!--<termination>-->
-            <!--<unimprovedStepCountLimit>200</unimprovedStepCountLimit>-->
-        <!--</termination>-->
-        <!--<unionMoveSelector>-->
-            <!--<cacheType>PHASE</cacheType>-->
-            <!--<selectionOrder>RANDOM</selectionOrder>-->
-            <!--<changeMoveSelector/>-->
-            <!--<swapMoveSelector/>-->
-        <!--</unionMoveSelector>-->
-        <!--<acceptor>-->
-            <!--<simulatedAnnealingStartingTemperature>[8/4/4/4]hard/[10/10/10/10/1000]soft</simulatedAnnealingStartingTemperature>-->
-            <!--<entityTabuRatio>0.05</entityTabuRatio>-->
-            <!--&lt;!&ndash;<valueTabuSize>50</valueTabuSize>&ndash;&gt;-->
-        <!--</acceptor>-->
-        <!--<forager>-->
-            <!--<acceptedCountLimit>4</acceptedCountLimit>-->
-        <!--</forager>-->
-    <!--</localSearch>-->
+
+    <localSearch>
+        <termination>
+            <unimprovedStepCountLimit>200</unimprovedStepCountLimit>
+        </termination>
+        <unionMoveSelector>
+            <cacheType>PHASE</cacheType>
+            <selectionOrder>RANDOM</selectionOrder>
+            <changeMoveSelector/>
+            <swapMoveSelector/>
+        </unionMoveSelector>
+        <acceptor>
+            <simulatedAnnealingStartingTemperature>[4/4/4/4]hard/[1000/1000/1000/10/1000]soft</simulatedAnnealingStartingTemperature>
+            <entityTabuRatio>0.05</entityTabuRatio>
+            <!--<valueTabuSize>50</valueTabuSize>-->
+        </acceptor>
+        <forager>
+            <acceptedCountLimit>512</acceptedCountLimit>
+        </forager>
+    </localSearch>
 </solver>

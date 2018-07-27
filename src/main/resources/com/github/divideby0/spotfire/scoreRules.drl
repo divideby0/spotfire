@@ -125,7 +125,7 @@ rule "Should not repeat same artist before minimum"
     scoreHolder.addSoftConstraintMatch(kcontext, 0, penalty.intValue());
 end
 
-rule "Transition key scales should contain each other's root note"
+rule "Transition trackKey scales should contain each other's root note"
     when
     TrackTransition(nextKey.scale not contains previousKey.rootNote || previousKey.scale not contains nextKey.rootNote)
 
@@ -133,7 +133,7 @@ rule "Transition key scales should contain each other's root note"
     scoreHolder.addSoftConstraintMatch(kcontext, 0, -40);
 end
 
-rule "Transition key scales should contain each other's fifth"
+rule "Transition trackKey scales should contain each other's fifth"
     when
     TrackTransition(nextKey.scale not contains previousKey.fifth || previousKey.scale not contains nextKey.fifth)
 
@@ -141,7 +141,7 @@ rule "Transition key scales should contain each other's fifth"
     scoreHolder.addSoftConstraintMatch(kcontext, 0, -20);
 end
 
-rule "Tracks transitions should have a known key change type"
+rule "Tracks transitions should have a known trackKey change type"
     when
     TrackTransition(keyChangeType == null)
 
@@ -149,7 +149,7 @@ rule "Tracks transitions should have a known key change type"
     scoreHolder.addSoftConstraintMatch(kcontext, 0, -10);
 end
 
-rule "Track transitions should use preferred key changes"
+rule "Track transitions should use preferred trackKey changes"
     when
     TrackTransition(keyChangeType != null, keyChangeType.penalty < 0, $penalty: keyChangeType.penalty)
 
@@ -157,7 +157,7 @@ rule "Track transitions should use preferred key changes"
     scoreHolder.addSoftConstraintMatch(kcontext, 0, $penalty);
 end
 
-rule "First transition should be same key"
+rule "First transition should be same trackKey"
     when
     TrackTransition(previousPosition == 0, keyChangeType != KeyChangeType.SAME_KEY)
 
@@ -172,7 +172,7 @@ declare KeyChangeTypeStreak
     length: Integer
 end
 
-rule "Should identify same key streak"
+rule "Should identify same trackKey streak"
     salience 50
     when
     TrackTransition($type: keyChangeType, $startPos: previousPosition)
@@ -190,7 +190,7 @@ rule "Should identify same key streak"
     insertLogical(streak);
 end
 
-rule "Should not exceed maximum same key change type streak"
+rule "Should not exceed maximum same trackKey change type streak"
     when
     PlaylistSettings($max: maximumKeyChangeTypeStreak)
     KeyChangeTypeStreak(type != KeyChangeType.SAME_KEY, length > $max, $length: length)
@@ -199,7 +199,7 @@ rule "Should not exceed maximum same key change type streak"
     scoreHolder.addSoftConstraintMatch(kcontext, 1, $max-$length);
 end
 
-rule "Should not exceed maximum same key streak"
+rule "Should not exceed maximum same trackKey streak"
     when
     PlaylistSettings($max: maximumSameKeyStreak)
     KeyChangeTypeStreak(type == KeyChangeType.SAME_KEY, length > $max, $length: length)
@@ -208,7 +208,7 @@ rule "Should not exceed maximum same key streak"
     scoreHolder.addSoftConstraintMatch(kcontext, 2, $max-$length);
 end
 
-rule "Same key streaks should be above minimum length"
+rule "Same trackKey streaks should be above minimum length"
     when
     PlaylistSettings($min: minimumSameKeyStreak)
     KeyChangeTypeStreak(type == KeyChangeType.SAME_KEY, length < $min, $length: length)
@@ -217,7 +217,7 @@ rule "Same key streaks should be above minimum length"
     scoreHolder.addSoftConstraintMatch(kcontext, 2, $length-$min);
 end
 
-rule "Should not change tempo above maximum"
+rule "Should not change trackTempo above maximum"
     when
     PlaylistSettings($max: maximumTempoChange)
     TrackTransition(Math.abs(tempoChange) > $max, $change: tempoChange);

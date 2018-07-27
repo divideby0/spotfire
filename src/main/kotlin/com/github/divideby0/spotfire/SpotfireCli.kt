@@ -1,12 +1,16 @@
 package com.github.divideby0.spotfire
 
 import com.github.divideby0.spotfire.domain.*
+import com.github.divideby0.spotfire.proto.SpotifyProtos
 import com.github.divideby0.spotfire.spotify.SpotifyIO
 import com.github.divideby0.spotfire.spotify.SpotifyProtoUtils
 import org.optaplanner.core.api.solver.Solver
 import org.optaplanner.core.api.solver.SolverFactory
 import kotlinx.cli.*
 import org.slf4j.LoggerFactory
+import java.io.File
+import java.io.FileInputStream
+import java.io.FileOutputStream
 import kotlin.system.exitProcess
 
 object SpotfireCli {
@@ -16,7 +20,8 @@ object SpotfireCli {
     fun main(args: Array<String>) {
         val cli = CommandLineInterface("Spotify Playlister")
         val refreshTokenArg by cli.flagValueArgument("-r", "--refresh-token", "Spotify access token (required)")
-        val sourcePlaylistUrlArg by cli.flagValueArgument("-p", "--playlist-uri", "Spotify playlist URI (required)")
+        val sourcePlaylistUrlArg by cli.flagValueArgument("-p", "--playlist-uri", "Spotify playlist URI")
+        val sourcePlaylistFile by cli.flagValueArgument("-f", "--playlist-file", "Source playlist file")
         val providedPlaylistName by cli.flagValueArgument("-n", "--playlist-name", "Destination playlist name")
         val minTracksBetweenArtistRepeat by cli.flagValueArgument("-t", "--tracks-between-artist-repeat", "Minimum tracks between artist repeat", 7) { it.toInt() }
         val allowExplicit by cli.flagValueArgument("-e", "--explicit", "Allow explicit tracks", true) { it.toBoolean() }
@@ -44,19 +49,13 @@ object SpotfireCli {
         val solverFactory: SolverFactory<SpotfirePlaylist> = SolverFactory.createFromXmlResource("com/github/divideby0/spotfire/solverConfig.xml")
         val solver: Solver<SpotfirePlaylist> = solverFactory.buildSolver()
 
-        val sourcePlaylistUrl = if (sourcePlaylistUrlArg.isNullOrEmpty()) {
-            print("Spotify SpotfirePlaylist URI: ")
-            readLine()!!.trim()
-        } else {
-            sourcePlaylistUrlArg!!
-        }
-
         val refreshToken = if (refreshTokenArg.isNullOrEmpty()) {
             print("Refresh token: ")
             readLine()!!.trim()
         } else {
             refreshTokenArg!!
         }
+
         val io = SpotifyIO(clientId, clientSecret)
 
         val settings = PlaylistSettings(
@@ -69,7 +68,28 @@ object SpotfireCli {
             maximumKeyChangeTypeStreak = 2
         )
 
-        val sourcePlaylistProto = io.getPlaylistProto(refreshToken, sourcePlaylistUrl)
+        val sourcePlaylistProto = if(sourcePlaylistFile.isNullOrEmpty()) {
+            val sourcePlaylistUrl = if (sourcePlaylistUrlArg.isNullOrEmpty()) {
+                print("Spotify SpotfirePlaylist URI: ")
+                readLine()!!.trim()
+            } else {
+                sourcePlaylistUrlArg!!
+            }
+
+
+
+            io.getPlaylistProto(refreshToken, sourcePlaylistUrl)
+        } else {
+            val fos = FileInputStream(File(sourcePlaylistFile))
+            SpotifyProtos.Playlist.parseFrom(fos)
+        }
+
+        val playlistId = sourcePlaylistProto.id
+
+        val filename = "playlist-$playlistId-${System.currentTimeMillis()}.spotify.proto"
+        log.info("Writing source playlist to $filename")
+        sourcePlaylistProto.writeTo(FileOutputStream(File(filename)))
+
         val problem = SpotifyProtoUtils.toSpotfirePlaylist(sourcePlaylistProto, settings)
 
         val solution = solver.solve(problem)
@@ -91,9 +111,9 @@ object SpotfireCli {
                             obj.previous.track?.let { previous ->
                                 val messages = mutableListOf<String>()
                                 match.constraintName.toLowerCase().let { c ->
-                                    if (c.contains("key")) messages.add("key: ${previous.key} -> ${next.key} (${obj.keyChangeType
+                                    if (c.contains("trackKey")) messages.add("trackKey: ${previous.trackKey} -> ${next.trackKey} (${obj.keyChangeType
                                         ?: "UNKNOWN"})")
-                                    if (c.contains("tempo")) messages.add("tempo: ${previous.tempo} -> ${next.tempo} (${obj.tempoChange})")
+                                    if (c.contains("trackTempo")) messages.add("trackTempo: ${previous.trackTempo} -> ${next.trackTempo} (${obj.tempoChange})")
                                     if (c.contains("energy")) messages.add("energy: ${previous.energy} -> ${next.energy} (${obj.energyChange})")
                                 }
                                 log.debug("    - ${messages.joinToString(", ")} => $obj")
@@ -110,30 +130,6 @@ object SpotfireCli {
 
         log.info("SpotfirePlaylist")
         log.info("============")
-        var lastAssignment: PlaylistAssignment? = null
-        solution.assignments.sortedBy { it.position }.forEach { a ->
-            a.track?.let { track ->
-                val sb = StringBuilder()
-                sb.append("=> ")
-                try {
-                    if (lastAssignment != null) {
-                        val transition = TrackTransition(lastAssignment!!, a)
-                        sb.append(transition)
-                    } else {
-                        sb.append(track.key)
-                    }
-                } catch (npe: NullPointerException) {
-                    log.warn("Received NPE for track ${a.position}")
-                }
-                sb.append(" =>")
-                log.info(sb.toString())
-            }
-
-            log.info(a.toString())
-            lastAssignment = a
-        }
-
-        log.info("")
 
         val destPlaylistName = providedPlaylistName ?: "${sourcePlaylistProto.name} (Spotfired)"
 

@@ -3,16 +3,17 @@ package com.github.divideby0.spotfire.domain
 import com.github.divideby0.spotfire.domain.KeyChangeType.*
 import com.wrapper.spotify.enums.Modality.*
 
+@Deprecated("used only by old score rules")
 class TrackTransition(
   val previous: PlaylistAssignment,
   val next: PlaylistAssignment
 ) {
   val previousPosition = previous.position
   val nextPosition = next.position
-  val previousKey = previous.track!!.key
-  val nextKey = next.track!!.key
+  val previousKey = previous.track!!.trackKey
+  val nextKey = next.track!!.trackKey
 
-  val tempoChange = next.track!!.tempo - previous.track!!.tempo
+  val tempoChange = next.track!!.trackTempo - previous.track!!.trackTempo
   val energyChange = next.track!!.energy - previous.track!!.energy
 
   val keyChangeType: KeyChangeType?

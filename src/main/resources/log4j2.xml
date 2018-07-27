@@ -11,7 +11,7 @@
         </File>
     </Appenders>
     <Loggers>
-        <Logger name="org.drools" level="INFO" additivity="false">
+        <Logger name="org.drools" level="warn" additivity="false">
             <Appender-ref ref="Console"/>
             <Appender-ref ref="File"/>
         </Logger>

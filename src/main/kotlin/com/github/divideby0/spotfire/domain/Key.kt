@@ -17,7 +17,9 @@ data class Key(
 
 	val second = scale[1]
 	val third = scale[2]
+	val fourth = scale[3]
 	val fifth = scale[4]
+	val sixth = scale[5]
 	val seventh = scale[6]
 
 	private val modeSuffix = when(mode) {

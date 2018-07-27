@@ -1,6 +1,7 @@
 package com.github.divideby0.spotfire.domain
 
 import com.wrapper.spotify.enums.AlbumType
+import java.time.Duration
 import java.time.LocalDate
 
 data class SpotifyAlbum(
@@ -11,7 +12,12 @@ data class SpotifyAlbum(
 	val genres: List<String>,
 	val label: String,
 	val popularity: Int,
-	val releaseDate: LocalDate?
+	val releaseDate: LocalDate?,
+	val yearsSinceRelease: Float? = if(releaseDate != null) {
+		releaseDate.until(LocalDate.now()).days.toFloat() / 365
+	} else {
+		null
+	}
 ) {
 //	constructor(album: Album, artistMap: Map<String, SpotifyArtist>): this(
 //		spotifyId = album.id,

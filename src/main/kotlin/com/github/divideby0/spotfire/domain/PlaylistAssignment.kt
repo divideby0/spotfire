@@ -1,10 +1,11 @@
 package com.github.divideby0.spotfire.domain
 
-import com.github.divideby0.spotfire.solver.PlaylistAssignmentDifficultComparator
+import com.github.divideby0.spotfire.solver.PlaylistTrackDifficultyComparator
 import org.optaplanner.core.api.domain.entity.PlanningEntity
 import org.optaplanner.core.api.domain.variable.PlanningVariable
 
-@PlanningEntity(difficultyComparatorClass = PlaylistAssignmentDifficultComparator::class)
+@Deprecated("used only by old score rules")
+@PlanningEntity(difficultyComparatorClass = PlaylistTrackDifficultyComparator::class)
 class PlaylistAssignment: Comparable<PlaylistAssignment> {
 	var position: Int = -1
 

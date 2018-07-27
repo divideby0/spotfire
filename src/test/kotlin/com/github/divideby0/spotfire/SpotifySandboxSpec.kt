@@ -14,11 +14,11 @@ import java.io.FileOutputStream
 
 class SpotifySandboxSpec: Spek({
     given("Spotify credentials") {
-        val clientId = System.getenv("SPOTIFY_CLIENT_ID") ?: "4a5f6f0c2e864e60aa72aefb411e83a8"
+        val clientId = System.getenv("SPOTIFY_CLIENT_ID")
         val clientSecret = System.getenv("SPOTIFY_CLIENT_SECRET")
-        val refreshToken = System.getenv("SPOTIFY_REFRESH_TOKEN") ?: "AQDNA4J8F4A9U9kBgEuu5J3m6S4KqfDsds9w_FbEFw_TavUSMa5i0Ml_cUCTHbWyNyECgfy9OTRTSLQEiRruHbneFrClMlS2tfPm2SJSpt5zew9KaNXeAvrLLRLuYlICGcQ"
+        val refreshToken = System.getenv("SPOTIFY_REFRESH_TOKEN")
         val userId = "cedric.hurst"
-        val playlistId = "30xBsx01pRYKdMhY9Zzby5"
+        val playlistId = "7KU7PplG1DU3ryHgmksggK"
 
 
         val start = System.currentTimeMillis()

@@ -4,25 +4,138 @@ import org.optaplanner.core.api.score.buildin.bendable.BendableScoreHolder;
 import com.github.divideby0.spotfire.domain.*;
 import java.util.List;
 import java.util.Set;
+//import com.github.divideby0.spotfire.solver.TransitionUtils;
 
 global BendableScoreHolder scoreHolder;
 
-rule "Set first track position"
+rule "Set next track"
+    salience 10
     when
-    $track: SpotifyTrack(position != 0)
-    FirstTrack($track == track)
+    $previous: PlaylistTrack(
+        position != null,
+        track!= null,
+        $p1: position,
+        $oldNextTrack: nextTrack
+    )
+    $next: PlaylistTrack(
+        position == $p1 + 1,
+        track != null,
+        track != $oldNextTrack,
+        $newNextTrack: track
+    )
 
     then
-    $track.setPosition(0);
-    update($track);
+    modify($previous) {
+      setNextTrack($newNextTrack)
+    }
 end
 
-rule "Set next track position"
+rule "Clear next track if no track selected in next position"
+//    salience 10
     when
-    $track: SpotifyTrack(position != null, nextTrack.position != position+1, $nextTrack: nextTrack, $position: position)
+    $pt: PlaylistTrack(
+        nextTrack != null,
+        position != null,
+        $nextPosition: position + 1
+    )
+    PlaylistTrack(
+        track == null,
+        position != null,
+        position == $nextPosition
+    )
 
     then
-    $nextTrack.setPosition($position+1);
-    update($nextTrack);
+//    System.out.println("position " + $pt.getPosition() + " clearing next track");
+    $pt.setNextTrack(null);
+    update($pt);
 end
 
+rule "Set previous track"
+    salience 10
+    when
+    $this: PlaylistTrack(
+        position != null,
+        track != null,
+        $p1: position,
+        $oldPreviousTrack: previousTrack,
+        $track: track
+    )
+    $previous: PlaylistTrack(
+        position == $p1 - 1,
+        track != null,
+        track != $oldPreviousTrack,
+        $newPreviousTrack: track
+    )
+
+    then
+    $this.setPreviousTrack($newPreviousTrack);
+    update($this);
+end
+
+
+
+rule "Clear previous track if no track selected in previous position"
+//    salience 10
+    when
+    $pt: PlaylistTrack(
+        previousTrack != null,
+        position != null,
+        position != 0,
+        $previousPosition: position - 1
+    )
+    PlaylistTrack(
+        track == null,
+        position != null,
+        position == $previousPosition
+    )
+
+    then
+//    System.out.println("position " + $pt.getPosition() + " clearing previous track");
+    $pt.setPreviousTrack(null);
+    update($pt);
+end
+
+rule "Should play song once and only once"
+    salience 5
+    when
+    $track: SpotifyTrack()
+    $playCount: Number(intValue() > 1 || intValue() == 0) from accumulate(
+        $pt: PlaylistTrack(track == $track),
+        count($pt)
+    )
+
+    then
+    scoreHolder.addHardConstraintMatch(kcontext, 0, new Double(-Math.pow($playCount.intValue(), 2)).intValue());
+end
+
+rule "should force first track"
+    when
+    $track: SpotifyTrack(
+        spotifyId ==  "5ovcVaOus1Wv4vTtyGXlhB"
+    )
+    PlaylistTrack(
+        position == 0,
+        track != null,
+        track != track
+    )
+
+    then
+    scoreHolder.addHardConstraintMatch(kcontext, 0, -100);
+end
+
+rule "should group Jens Lekman songs Together"
+    when
+    $t1: SpotifyTrack(
+        spotifyId == "2WbuPzYFOUynp3gKur5QQ1"
+    )
+    $t2: SpotifyTrack(
+        spotifyId == "4DwMljHzlmdU1PPbhy3NCU"
+    )
+    PlaylistTrack(
+        track == $t2,
+        previousTrack != $t1
+    )
+
+    then
+    scoreHolder.addHardConstraintMatch(kcontext, 0, -10);
+end

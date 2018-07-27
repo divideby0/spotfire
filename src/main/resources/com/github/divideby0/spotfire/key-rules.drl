@@ -1,0 +1,197 @@
+package com.github.divideby0.spotfire
+
+import org.optaplanner.core.api.score.buildin.bendable.BendableScoreHolder;
+import com.github.divideby0.spotfire.domain.*;
+import java.util.List;
+import java.util.Set;
+import com.wrapper.spotify.enums.Modality;
+//import com.github.divideby0.spotfire.solver.TransitionUtils;
+
+global BendableScoreHolder scoreHolder;
+
+rule "identify SAME_KEY changes"
+    when
+    $key: Key()
+    not KeyChange(fromKey == $key, toKey == $key)
+
+    then
+    KeyChange kc = new KeyChange($key, $key, KeyChangeType.SAME_KEY, 0);
+    insert(kc);
+end
+
+rule "identify UP_FIFTH key changes"
+    when
+    $fromKey: Key($toRoot: fifth, $mode: mode)
+    $toKey: Key(rootNote == $toRoot, mode == $mode)
+    not KeyChange(fromKey == $fromKey, toKey == $toKey)
+
+    then
+    KeyChange kc = new KeyChange($fromKey, $toKey, KeyChangeType.UP_FIFTH, 1);
+    insert(kc);
+end
+
+rule "identify DOWN_FIFTH key changes"
+    when
+    $fromKey: Key($toRoot: fourth, $mode: mode)
+    $toKey: Key(rootNote == $toRoot, mode == $mode)
+    not KeyChange(fromKey == $fromKey, toKey == $toKey)
+
+    then
+    KeyChange kc = new KeyChange($fromKey, $toKey, KeyChangeType.DOWN_FIFTH, 1);
+    insert(kc);
+end
+
+rule "identify RELATIVE_MINOR key changes"
+    when
+    $fromKey: Key($toRoot: sixth, mode == Modality.MAJOR)
+    $toKey: Key(rootNote == $toRoot, mode == Modality.MINOR)
+    not KeyChange(fromKey == $fromKey, toKey == $toKey)
+
+    then
+    KeyChange kc = new KeyChange($fromKey, $toKey, KeyChangeType.RELATIVE_MINOR, 1);
+    insert(kc);
+end
+
+rule "identify RELATIVE_MAJOR key changes"
+    when
+    $fromKey: Key($toRoot: second, mode == Modality.MINOR)
+    $toKey: Key(rootNote == $toRoot, mode == Modality.MAJOR)
+    not KeyChange(fromKey == $fromKey, toKey == $toKey)
+
+    then
+    KeyChange kc = new KeyChange($fromKey, $toKey, KeyChangeType.RELATIVE_MAJOR, 1);
+    insert(kc);
+end
+
+
+rule "identify transitions with key changes"
+    when
+    $kc: KeyChange(
+        $fromKey: fromKey,
+        $toKey: toKey,
+        $type: type
+    )
+    $pt: PlaylistTrack(
+        track != null,
+        previousTrack != null,
+        previousTrack.endKey == $fromKey,
+        track.startKey == $toKey,
+        keyChange != $kc
+    )
+
+    then
+    $pt.setKeyChange($kc);
+    update($pt);
+end
+
+rule "Clear track key change when not found"
+    when
+    $pt: PlaylistTrack(
+        track != null,
+        previousTrack != null,
+        keyChange != null,
+        $fromKey: previousTrack.endKey,
+        $toKey: track.startKey
+    )
+    not KeyChange(
+        fromKey == $fromKey,
+        toKey == $toKey
+    )
+
+    then
+    $pt.setKeyChange(null);
+    update($pt);
+end
+
+rule "Clear track key change when current or next track is not assigned"
+    when
+    $pt: PlaylistTrack(
+        track == null || previousTrack == null,
+        keyChange != null
+    )
+
+    then
+    $pt.setKeyChange(null);
+    update($pt);
+end
+
+rule "should not have unknown key changes"
+    when
+    PlaylistTrack(keyChange == null)
+
+    then
+    scoreHolder.addSoftConstraintMatch(kcontext, 1, -8);
+end
+
+rule "first two transitions should have known key change"
+    when
+    PlaylistTrack(
+        position <= 2,
+        previousTrack != null,
+        keyChange == null,
+        $position: position,
+        $keyChange: keyChange
+    )
+
+    then
+    scoreHolder.addSoftConstraintMatch(kcontext, 1, -8*20*(2-$position));
+end
+
+rule "first two transitions should be same key"
+    when
+    PlaylistTrack(
+        position <= 2,
+        previousTrack != null,
+        keyChange != null,
+        $position: position,
+        $cost: keyChange.cost
+    )
+
+    then
+    scoreHolder.addSoftConstraintMatch(kcontext, 1, -$cost*20*(2-$position));
+end
+
+rule "should maintain key momentum"
+    when
+    PlaylistTrack(
+        position != null,
+        $maxPosition: position,
+        $minPosition: position - 5
+    )
+    $totalCost: Number(intValue() > 2) from accumulate(
+        PlaylistTrack(
+            track != null,
+            position <= $maxPosition,
+            position > $minPosition,
+            $cost: keyChange.cost
+        ),
+        sum($cost)
+    )
+
+    then
+    scoreHolder.addSoftConstraintMatch(kcontext, 1, 2-$totalCost.intValue());
+end
+
+rule "should change keys at least every 5 songs"
+    when
+    PlaylistTrack(
+        $firstPos: position,
+        keyChange != null,
+        keyChange.type == KeyChangeType.SAME_KEY
+    )
+    PlaylistTrack(
+        position > $firstPos + 5,
+        $lastPos: position,
+        keyChange != null,
+        keyChange.type == KeyChangeType.SAME_KEY
+    )
+    not PlaylistTrack(
+        position > $firstPos,
+        position < $lastPos,
+        keyChange != null,
+        keyChange.type == KeyChangeType.SAME_KEY
+    )
+
+    then
+        scoreHolder.addSoftConstraintMatch(kcontext, 1, ($firstPos-$lastPos)*20);
+end
