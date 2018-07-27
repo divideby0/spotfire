@@ -24,13 +24,26 @@ rule "set tempo change"
     update($pt);
 end
 
-rule "tempo change should not exceed 30 bpm"
+rule "tempo change should not exceed 40 bpm"
+    when
+    PlaylistTrack(
+        tempoChange != null,
+        Math.abs(tempoChange) > 40,
+        $tempoChange: tempoChange
+    )
+
+    then
+    Integer penalty = Float.valueOf((40 - Math.abs($tempoChange))*10).intValue();
+    scoreHolder.addSoftConstraintMatch(kcontext, 3, penalty);
+end
+
+rule "tempo change average over 2 songs should not exceed 20 bpm"
     when
     PlaylistTrack(
         $maxPosition: position,
-        $minPosition: position - 3
+        $minPosition: position - 2
     )
-    $averageChange: Number(doubleValue() > 30.0) from accumulate(
+    $averageChange: Number(floatValue() > 20) from accumulate(
         PlaylistTrack(
             track != null,
             position <= $maxPosition,
@@ -41,6 +54,6 @@ rule "tempo change should not exceed 30 bpm"
     )
 
     then
-    Integer penalty = Double.valueOf((30 - $averageChange.doubleValue()*10)).intValue();
+    Integer penalty = Float.valueOf((30 - $averageChange.floatValue()*10)).intValue();
     scoreHolder.addSoftConstraintMatch(kcontext, 3, penalty);
 end
