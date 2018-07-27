@@ -27,11 +27,20 @@ end
 rule "tempo change should not exceed 30 bpm"
     when
     PlaylistTrack(
-        tempoChange > 30 || tempoChange < -30,
-        $tempoChange: tempoChange
+        $maxPosition: position,
+        $minPosition: position - 3
+    )
+    $averageChange: Number(doubleValue() > 30.0) from accumulate(
+        PlaylistTrack(
+            track != null,
+            position <= $maxPosition,
+            position > $minPosition,
+            $tempoChange: Math.abs(tempoChange)
+        ),
+        average($tempoChange)
     )
 
     then
-    Integer penalty = Double.valueOf(30 - Math.abs($tempoChange)).intValue();
+    Integer penalty = Double.valueOf((30 - $averageChange.doubleValue()*10)).intValue();
     scoreHolder.addSoftConstraintMatch(kcontext, 3, penalty);
 end
