@@ -46,12 +46,12 @@
             <swapMoveSelector/>
         </unionMoveSelector>
         <acceptor>
-            <simulatedAnnealingStartingTemperature>[4/4/4/4]hard/[1000/1000/1000/10/1000]soft</simulatedAnnealingStartingTemperature>
+            <simulatedAnnealingStartingTemperature>[4/4/4/4]hard/[2/8/2/10/1000]soft</simulatedAnnealingStartingTemperature>
             <entityTabuRatio>0.05</entityTabuRatio>
             <!--<valueTabuSize>50</valueTabuSize>-->
         </acceptor>
         <forager>
-            <acceptedCountLimit>32</acceptedCountLimit>
+            <acceptedCountLimit>8</acceptedCountLimit>
         </forager>
     </localSearch>
 </solver>
