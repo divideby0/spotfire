@@ -51,7 +51,7 @@
             <!--<valueTabuSize>50</valueTabuSize>-->
         </acceptor>
         <forager>
-            <acceptedCountLimit>512</acceptedCountLimit>
+            <acceptedCountLimit>32</acceptedCountLimit>
         </forager>
     </localSearch>
 </solver>
