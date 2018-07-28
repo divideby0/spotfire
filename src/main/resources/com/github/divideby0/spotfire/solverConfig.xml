@@ -2,7 +2,7 @@
 <solver>
     <!--<environmentMode>PRODUCTION</environmentMode>-->
     <!--<environmentMode>FAST_ASSERT</environmentMode>-->
-    <!--<environmentMode>REPRODUCIBLE</environmentMode>-->
+    <!--<environmentMode>FULL_ASSERT</environmentMode>-->
     <solutionClass>com.github.divideby0.spotfire.domain.SpotfirePlaylist</solutionClass>
     <entityClass>com.github.divideby0.spotfire.domain.PlaylistTrack</entityClass>
     <!--<entityClass>com.github.divideby0.spotfire.domain.FirstTrack</entityClass>-->
@@ -11,7 +11,7 @@
         <scoreDrl>com/github/divideby0/spotfire/track-order.drl</scoreDrl>
         <scoreDrl>com/github/divideby0/spotfire/artist-and-genre-rules.drl</scoreDrl>
         <scoreDrl>com/github/divideby0/spotfire/key-rules.drl</scoreDrl>
-        <!--<scoreDrl>com/github/divideby0/spotfire/tempo-rules.drl</scoreDrl>-->
+        <scoreDrl>com/github/divideby0/spotfire/tempo-rules.drl</scoreDrl>
         <!--<initializingScoreTrend>ONLY_DOWN</initializingScoreTrend>-->
     </scoreDirectorFactory>
 

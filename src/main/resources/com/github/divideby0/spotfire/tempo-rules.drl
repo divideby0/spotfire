@@ -9,82 +9,81 @@ import com.wrapper.spotify.enums.Modality;
 
 global BendableScoreHolder scoreHolder;
 
+declare TrackValueChange
+    currentTrack: SpotifyTrack
+    previousTrack: SpotifyTrack
+    position: Integer
+    tempoChange: Float
+    tempoAbsoluteChange: Float
+    danceabilityChange: Float
+    valenceChange: Float
+end
+
 rule "set tempo change"
-    no-loop
     when
-    $currentTrack: SpotifyTrack(
-        $currentTempo: startTempo
+    PlaylistTrack(
+        track != null,
+        previousTrack != null,
+        $position: position,
+        $currentTrack: track,
+        $previousTrack: previousTrack
     )
-    $previousTrack: SpotifyTrack(
-        ($currentTempo - endTempo > 30) || (endTempo - $currentTempo > 30),
-        $previousTempo: endTempo
+    not TrackValueChange(
+        currentTrack == $currentTrack,
+        previousTrack == $previousTrack,
+        position == $position
     )
-    $pt: PlaylistTrack(
+
+    then
+    TrackValueChange change = new TrackValueChange();
+    change.setCurrentTrack($currentTrack);
+    change.setPreviousTrack($previousTrack);
+    change.setPosition($position);
+    change.setTempoChange($currentTrack.getStartTempo() - $previousTrack.getEndTempo());
+    change.setTempoAbsoluteChange(Math.abs($currentTrack.getStartTempo() - $previousTrack.getEndTempo()));
+    change.setDanceabilityChange($currentTrack.getStartTempo() - $previousTrack.getEndTempo());
+    change.setValenceChange($currentTrack.getValence() - $previousTrack.getValence());
+    insert(change);
+end
+
+rule "clear tempo change if current track not assigned"
+    when
+    $tvc: TrackValueChange(
+        $currentTrack: currentTrack,
+        $previousTrack: previousTrack,
+        $position: position
+    )
+    not PlaylistTrack(
+        position == $position,
         track == $currentTrack,
         previousTrack == $previousTrack
     )
 
     then
-    Float change = Math.abs($currentTempo - $previousTempo);
-    System.out.println("prev: " + $previousTempo + ", current: " + $currentTempo + ", tempo change: " + change);
-    $pt.setTempoChange(change);
-    update($pt);
-end
-
-rule "clear tempo change if current track not assigned"
-    when
-    $pt: PlaylistTrack(
-        track == null,
-        tempoChange != null
-    )
-
-    then
-    $pt.setTempoChange(null);
-    update($pt);
-end
-
-rule "clear tempo change if previous track not assigned"
-    when
-    $pt: PlaylistTrack(
-        previousTrack == null,
-        tempoChange != null
-    )
-
-    then
-    $pt.setTempoChange(null);
-    update($pt);
+    retract($tvc);
 end
 
 rule "tempo change should not exceed 30 bpm"
     when
-    PlaylistTrack(
-        tempoChange > 30,
-        $tempoChange: tempoChange
+    TrackValueChange(
+        tempoAbsoluteChange > 30,
+        $change: tempoAbsoluteChange
     )
 
     then
 //    System.out.println("tempo change: " + $tempoChange);
-    Integer penalty = Double.valueOf((30 - $tempoChange)*10).intValue();
+    Integer penalty = Double.valueOf((30 - $change)*10).intValue();
     scoreHolder.addSoftConstraintMatch(kcontext, 3, penalty);
 end
 
-//rule "tempo change average over 2 songs should not exceed 20 bpm"
-//    when
-//    PlaylistTrack(
-//        $maxPosition: position,
-//        $minPosition: position - 2
-//    )
-//    $averageChange: Number(floatValue() > 20) from accumulate(
-//        PlaylistTrack(
-//            track != null,
-//            position <= $maxPosition,
-//            position > $minPosition,
-//            $tempoChange: Math.abs(tempoChange)
-//        ),
-//        average($tempoChange)
-//    )
-//
-//    then
-//    Integer penalty = Float.valueOf((30 - $averageChange.floatValue()*10)).intValue();
-//    scoreHolder.addSoftConstraintMatch(kcontext, 3, penalty);
-//end
+rule "should not drastically reduce danceability"
+    when
+    TrackValueChange(
+        danceabilityChange < -0.3,
+        $change: danceabilityChange
+    )
+
+    then
+    Integer penalty = -Double.valueOf((0.3 - $change)*100).intValue();
+    scoreHolder.addSoftConstraintMatch(kcontext, 4, penalty);
+end
