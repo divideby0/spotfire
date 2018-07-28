@@ -53,10 +53,24 @@ class SpotifyIO(
         return SpotifyProtoUtils.toUserProto(api.getUsersProfile(userId).build().execute())
     }
 
+    fun getPlaylist(refreshToken: String, playlistUri: String) =
+        getPlaylist(getApiFromRefreshToken(refreshToken), playlistUri)
+
+    fun getPlaylist(api: SpotifyApi, playlistUri: String): Playlist? {
+        val match = playlistUriPattern.matchEntire(playlistUri)
+        match?.let { m ->
+            val (userId, playlistId) = m.destructured
+            return api.getPlaylist(userId, playlistId).build().execute()
+        } ?: run { return null }
+    }
+
     fun getPlaylistProto(api: SpotifyApi, userId: String, playlistId: String): SpotifyProtos.Playlist {
         log.info("Getting playlist $playlistId from user $userId")
         val playlist = api.getPlaylist(userId, playlistId).build().execute()
+        return getPlaylistProto(api, playlist)
+    }
 
+    fun getPlaylistProto(api: SpotifyApi, playlist: Playlist): SpotifyProtos.Playlist {
         val b = SpotifyProtos.Playlist.newBuilder()
         b.id = playlist.id
         b.uri = playlist.uri
