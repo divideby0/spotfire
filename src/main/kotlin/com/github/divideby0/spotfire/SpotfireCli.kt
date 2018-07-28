@@ -66,27 +66,35 @@ object SpotfireCli {
             maximumKeyChangeTypeStreak = 2
         )
 
-        val sourcePlaylistProto = if(sourcePlaylistFile.isNullOrEmpty()) {
-            val sourcePlaylistUrl = if (sourcePlaylistUrlArg.isNullOrEmpty()) {
-                print("Spotify SpotfirePlaylist URI: ")
+        var writeFile = false
+
+        val sourcePlaylistProtoFile = if(!sourcePlaylistFile.isNullOrEmpty() && File(sourcePlaylistFile).exists()) {
+            File(sourcePlaylistFile)
+        } else {
+            val sourcePlaylistUrl = if(sourcePlaylistUrlArg.isNullOrEmpty()) {
+                print("Spotify Playlist URI: ")
                 readLine()!!.trim()
             } else {
                 sourcePlaylistUrlArg!!
             }
-
-
-
-            io.getPlaylistProto(refreshToken, sourcePlaylistUrl)
-        } else {
-            val fos = FileInputStream(File(sourcePlaylistFile))
-            SpotifyProtos.Playlist.parseFrom(fos)
+            val playlist = io.getPlaylist(refreshToken, sourcePlaylistUrl)
+            if(playlist != null) {
+                val filename = "playlist-${playlist.id}-${playlist.snapshotId}.spotify.proto"
+                if (File(filename).exists()) {
+                    File(filename)
+                } else {
+                    val proto = io.getPlaylistProto(refreshToken, sourcePlaylistUrl)
+                    val file = File(filename)
+                    proto.writeTo(FileOutputStream(file))
+                    file
+                }
+            } else {
+                log.error("Could not find playlist for url $sourcePlaylistUrl")
+                exitProcess(2)
+            }
         }
 
-        val playlistId = sourcePlaylistProto.id
-
-        val filename = "playlist-$playlistId-${System.currentTimeMillis()}.spotify.proto"
-        log.info("Writing source playlist to $filename")
-        sourcePlaylistProto.writeTo(FileOutputStream(File(filename)))
+        val sourcePlaylistProto = SpotifyProtos.Playlist.parseFrom(FileInputStream(sourcePlaylistProtoFile))
 
         val problem = SpotifyProtoUtils.toSpotfirePlaylist(sourcePlaylistProto, settings)
 
