@@ -67,7 +67,14 @@ rule "identify RELATIVE_MAJOR key changes"
     insert(kc);
 end
 
-rule "identify transitions with key changes"
+declare TrackKeyChange
+    currentTrack: SpotifyTrack
+    previousTrack: SpotifyTrack
+    position: Integer
+    keyChange: KeyChange
+end
+
+rule "identify track key changes"
     salience 50
     when
     $kc: KeyChange(
@@ -80,58 +87,56 @@ rule "identify transitions with key changes"
         previousTrack != null,
         previousTrack.endKey == $fromKey,
         track.startKey == $toKey,
-        keyChange != $kc
+        $position: position,
+        $currentTrack: track,
+        $previousTrack: previousTrack
+    )
+    not TrackKeyChange(
+        currentTrack == $currentTrack,
+        previousTrack == $previousTrack,
+        position == $position,
+        keyChange == $kc
     )
 
     then
-    $pt.setKeyChange($kc);
-    update($pt);
+    TrackKeyChange tkc = new TrackKeyChange();
+    tkc.setCurrentTrack($currentTrack);
+    tkc.setPreviousTrack($previousTrack);
+    tkc.setPosition($position);
+    tkc.setKeyChange($kc);
+    insert(tkc);
 end
 
-rule "Clear stale key changes"
+
+
+rule "Clear stale track key changes"
     when
-    $pt: PlaylistTrack(
-        track != null,
-        previousTrack != null,
-        keyChange != null,
-        (previousTrack.endKey != keyChange.fromKey) || (track.startKey != keyChange.toKey)
+    $tkc: TrackKeyChange(
+        $currentTrack: currentTrack,
+        $previousTrack: previousTrack
+    )
+    not PlaylistTrack(
+        track == $currentTrack,
+        previousTrack == $previousTrack
     )
 
     then
-    $pt.setKeyChange(null);
-    update($pt);
-end
-
-rule "Clear track key change when current track is not assigned"
-    when
-    $pt: PlaylistTrack(
-        track == null,
-        keyChange != null
-    )
-
-    then
-    $pt.setKeyChange(null);
-    update($pt);
-end
-
-rule "Clear track key change when previous track is not assigned"
-    when
-    $pt: PlaylistTrack(
-        previousTrack == null,
-        keyChange != null
-    )
-
-    then
-    $pt.setKeyChange(null);
-    update($pt);
+    retract($tkc);
 end
 
 rule "should not have unknown key changes"
     when
-    PlaylistTrack(keyChange == null)
+    PlaylistTrack(
+        $currentTrack: track,
+        $previousTrack: previousTrack
+    )
+    not TrackKeyChange(
+        currentTrack == $currentTrack,
+        previousTrack == $previousTrack
+    )
 
     then
-    scoreHolder.addSoftConstraintMatch(kcontext, 1, -8);
+    scoreHolder.addSoftConstraintMatch(kcontext, 1, -80);
 end
 
 rule "first two transitions should have known key change"
@@ -139,9 +144,10 @@ rule "first two transitions should have known key change"
     PlaylistTrack(
         position <= 2,
         previousTrack != null,
-        keyChange == null,
-        $position: position,
-        $keyChange: keyChange
+        $position: position
+    )
+    not TrackKeyChange(
+        position == $position
     )
 
     then
@@ -153,8 +159,11 @@ rule "first two transitions should be same key"
     PlaylistTrack(
         position <= 2,
         previousTrack != null,
-        keyChange != null,
-        $position: position,
+        $position: position
+    )
+    TrackKeyChange(
+        position == $position,
+        keyChange.type != KeyChangeType.SAME_KEY,
         $cost: keyChange.cost
     )
 
@@ -169,9 +178,8 @@ rule "should maintain key momentum"
         $maxPosition: position,
         $minPosition: position - 5
     )
-    $totalCost: Number(intValue() > 2) from accumulate(
-        PlaylistTrack(
-            track != null,
+    $totalCost: Number(intValue > 2) from accumulate(
+        TrackKeyChange(
             position <= $maxPosition,
             position > $minPosition,
             $cost: keyChange.cost
@@ -183,63 +191,59 @@ rule "should maintain key momentum"
     scoreHolder.addSoftConstraintMatch(kcontext, 1, 2-$totalCost.intValue());
 end
 
-declare SameKeyStreak
-    startPos: Integer
-    endPos: Integer
-    length: Integer
-end
-
-rule "identify same key streaks"
-    no-loop
-    when
-    PlaylistTrack(
-        $startPos: position,
-        keyChange != null,
-        keyChange.type == KeyChangeType.SAME_KEY
-    )
-    PlaylistTrack(
-        position > $startPos,
-        $endPos: position,
-        keyChange != null,
-        keyChange.type == KeyChangeType.SAME_KEY
-    )
-    not PlaylistTrack(
-        position > $startPos,
-        position < $endPos,
-        keyChange != null,
-        keyChange.type == KeyChangeType.SAME_KEY
-    )
-    not SameKeyStreak(
-        startPos == $startPos,
-        length > $endPos - $startPos
-    )
-
-    then
-    SameKeyStreak streak = new SameKeyStreak();
-    streak.setStartPos($startPos);
-    streak.setEndPos($endPos);
-    streak.setLength($endPos-$startPos);
-    insertLogical(streak);
-end
-
-rule "should not play same key more than 5 songs"
-    when
-    SameKeyStreak(
-        length > 5,
-        $length: length
-    )
-
-    then
-    scoreHolder.addSoftConstraintMatch(kcontext, 1, -Double.valueOf(Math.pow(5-$length, 1.5)).intValue());
-end
-
-rule "should play same key at least two songs in a row"
-    when
-    SameKeyStreak(
-        length < 3,
-        $length: length
-    )
-
-    then
-    scoreHolder.addSoftConstraintMatch(kcontext, 1, -$length*10);
-end
+//declare SameKeyStreak
+//    startPos: Integer
+//    endPos: Integer
+//    length: Integer
+//end
+//
+//rule "identify same key streaks"
+//    no-loop
+//    when
+//    TrackKeyChange(
+//        $startPos: position
+//    )
+//    TrackKeyChange(
+//        position > $startPos,
+//        $endPos: position,
+//        keyChange.type == KeyChangeType.SAME_KEY
+//    )
+//    not TrackKeyChange(
+//        position > $startPos,
+//        position < $endPos,
+//        keyChange.type == KeyChangeType.SAME_KEY
+//    )
+//    not SameKeyStreak(
+//        startPos == $startPos,
+//        length > $endPos - $startPos
+//    )
+//
+//    then
+//    SameKeyStreak streak = new SameKeyStreak();
+//    streak.setStartPos($startPos);
+//    streak.setEndPos($endPos);
+//    streak.setLength($endPos-$startPos);
+//    insertLogical(streak);
+//end
+//
+//rule "should not play same key more than 5 songs"
+//    when
+//    SameKeyStreak(
+//        length > 5,
+//        $length: length
+//    )
+//
+//    then
+//    scoreHolder.addSoftConstraintMatch(kcontext, 2, 5-$length);
+//end
+//
+////rule "should play same key at least two songs in a row"
+////    when
+////    SameKeyStreak(
+////        length < 3,
+////        $length: length
+////    )
+////
+////    then
+////    scoreHolder.addSoftConstraintMatch(kcontext, 2, $length-3);
+////end
